@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="utf-8">
+
+    <!-- Developed by Rodrigo Zepeda -->
+    <!-- MIT LICENSE
+        Copyright 2024 Columbia University in the City of New York
+        Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+        associated documentation files (the "Software"), to deal in the Software without restriction,
+        including without limitation the rights to use, copy, modify, merge, publish, distribute,
+        sublicense, and/or sell copies of the Software, and to permit persons to whom the Software
+        is furnished to do so, subject to the following conditions:
+        The above copyright notice and this permission notice shall be included in all copies or substantial
+        portions of the Software.
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+        INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+        PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+        DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+    -->
+
+    <meta name="theme-color" content="#4285f4">
+    <meta name="description" content="Mozambique malaria and dengue forecasts">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="keywords" content="Mozambique, Malaria, Dengue, Model, Projections, Forecast, Moçambique, Malária, Doenças Diarréicas, Máquina">
+    <meta name="author" content="Rodrigo Zepeda-Tello">
+
+    <!-- TODO: Change the cards and description here-->
+    <meta name="twitter:card" content="summary"><!-- required -->
+    <meta name="twitter:site" content="@MaquinaMoçambique"><!-- required -->
+    <meta name="twitter:title" content="MÁQUINA: Moçambique"><!-- required -->
+    <meta name="twitter:description" content="Predicciones del % de ocupación hospitalaria de la red IRAG"><!-- optional -->
+    <meta name="twitter:image" content="https://github.com/RodrigoZepeda/CapacidadHospitalariaMX/blob/master/docs/images/CapacidadHospitalariaLogoDark.png"><!-- optional -->
+    <meta name="twitter:image:alt" content="Logo"><!-- optional -->
+    
+    <meta property="og:title" content="Capacidad Hospitalaria MX" />
+    <meta property="og:url" content="https://rodrigozepeda.github.io/CapacidadHospitalariaMX/" />
+    <meta property="og:description" content="Predicciones del % de ocupación hospitalaria de la red IRAG">
+    <meta property="og:image" content="https://github.com/RodrigoZepeda/CapacidadHospitalariaMX/blob/master/docs/images/CapacidadHospitalariaLogoDark.png">
+
+    <!--<link rel="apple-touch-icon" sizes="180x180" href="images/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="images/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="images/favicon-16x16.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="images/android-chrome-512x512.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="images/android-chrome-192x192.png">
+    -->
+    
+    <meta name="msapplication-TileColor" content="#ffffff">
+    <meta name="theme-color" content="#ffffff">
+
+    <title>MAQUINA Moçambique</title>
+    <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/font-awesome.min.css">
+
+    <!--jquery-->
+    <script src="src/jquery-3.7.1.min.js"></script>
+
+    <!--Plotting-->
+    <script src="src/d3.v7.min.js"></script>
+    <!--<script src="script/plot.js" type = "text/javascript"></script>-->
+
+    <script src="src/map_left.js"></script>
+    <link href="css/custom.css" rel="stylesheet" />
+
+    <!--Slider-->
+    <!--https://slawomir-zaziablo.github.io/range-slider-->
+    <link rel="stylesheet" href="css/rSlider.min.css">
+    <script src="src/rSlider.min.js"></script>
+
+</head>
+
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark px-5">
+    <span class="navbar-brand">MÁQUINA:</span> 
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav ml-auto">
+            <li class="nav-item active">
+                <a class="nav-link" href="#">Malária</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">Doenças Diarréicas</a>
+            </li>
+        </ul>
+    </div>
+</nav>    
+<main role="main">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card mt-3">
+                    <div class="card-body">
+                    <h2 class="lead mt-3">Malária</h2>
+                    <!-- Initial text here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <div class="card mt-3">
+                    <div class="card-header">
+                    Incidência Acumulada [Total de casos previstos]
+                    </div>
+                    <div class="card-body">
+                        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 justify-content-center">
+                            <div class="col mt-3">
+                                <canvas id="leftMapCanvas" width="400" height="500"></canvas>
+                            </div>
+                            <div class="col align-items-center">
+                                <span> GRADIENT </span>
+                            </div>
+                            <div class="col mt-3">
+                                <canvas id="rightMapCanvas" width="400" height="500"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <span>Semana:</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="container">    
+                            <div class="slider-container">
+                                <input type="text" id="sampleSlider"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <div class="card mt-3">
+                    <div class="card-body">
+                        <h5 class="card-title">Table Section</h5>
+                        <table class="table" id="dataTable">
+                            <!-- Table content will be populated dynamically -->
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 justify-content-center">
+            <div class="col">
+                <div class="card mt-3">
+                    <div class="card-header">
+                        Cabo Delgado
+                    </div>
+                    <div class="card-body">
+                        <p>Additional card content goes here.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card mt-3">
+                    <div class="card-header">
+                        Gaza
+                    </div>
+                    <div class="card-body">
+                        <p>Additional card content goes here.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card mt-3">
+                    <div class="card-header">
+                        Inhambane
+                    </div>
+                    <div class="card-body">
+                        <p>Additional card content goes here.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card mt-3">
+                    <div class="card-header">
+                        Manica
+                    </div>
+                    <div class="card-body">
+                        <p>Additional card content goes here.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 justify-content-center">
+            <div class="col">
+                <div class="card mt-3">
+                    <div class="card-header">
+                        Maputo
+                    </div>
+                    <div class="card-body">
+                        <p>Additional card content goes here.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card mt-3">
+                    <div class="card-header">
+                        Maputo (cidade)
+                    </div>
+                    <div class="card-body">
+                        <p>Additional card content goes here.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card mt-3">
+                    <div class="card-header">
+                        Nampula
+                    </div>
+                    <div class="card-body">
+                        <p>Additional card content goes here.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card mt-3">
+                    <div class="card-header">
+                        Niassa
+                    </div>
+                    <div class="card-body">
+                        <p>Additional card content goes here.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 justify-content-center">
+            <div class="col">
+                <div class="card mt-3">
+                    <div class="card-header">
+                        Sofala
+                    </div>
+                    <div class="card-body">
+                        <p>Additional card content goes here.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card mt-3">
+                    <div class="card-header">
+                        Tete
+                    </div>
+                    <div class="card-body">
+                        <p>Additional card content goes here.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card mt-3">
+                    <div class="card-header">
+                        Zambézia
+                    </div>
+                    <div class="card-body">
+                        <p>Additional card content goes here.</p>
+                    </div>
+                </div>
+            </div>
+        </div>    
+    </div>
+</main>
+<!-- Your custom JavaScript -->
+<script>
+  $( document ).ready(function(){
+    var mySlider = new rSlider({
+        target: '#sampleSlider',
+        values: {min: 1, max: 16},
+        step: 1,
+        range: false,
+        tooltip: true,
+        labels: true,
+        set: [1]
+    });
+  });
+</script>
+</body>
+</html>
