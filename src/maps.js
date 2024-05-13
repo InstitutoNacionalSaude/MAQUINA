@@ -55,8 +55,8 @@ function updateDataMapPrevisto() {
 
     // Define the map projection
     let projection = d3.geoMercator()
-                            .scale(1)
-                            .translate([0, 0]);
+                        .scale(1)
+                        .translate([0, 0]);
 
     // Define a path generator
     let path = d3.geoPath()
