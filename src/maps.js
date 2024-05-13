@@ -290,13 +290,13 @@ function updateDataMapObservado() {
 function showTooltipMap(region, value, x, y, bgcolor, side) {
     
     // Round the value
-    const roundedValue = Math.round(value);
+    let roundedValue = Math.round(value);
     
     //Get object height
-    const height = d3.select("#" + side + "MapCanvas").attr("height")
+    let height = d3.select("#" + side + "MapCanvas").attr("height")
 
     // Create or update tooltip element
-    var tooltip = d3.select("#" + side + "TooltipMap");
+    let tooltip = d3.select("#" + side + "TooltipMap");
     if (tooltip.empty()) {        
         tooltip = d3.select("#" + side + "MapContainer").append("div")
             .attr("id", side + "TooltipMap")
@@ -310,7 +310,7 @@ function showTooltipMap(region, value, x, y, bgcolor, side) {
     }
     
     // Update tooltip content with region in bold and rounded value
-    tooltip.html("<strong>" + region + "</strong>: " + roundedValue + "<emph> " + side + "</emph>")
+    tooltip.html("<strong>" + region + "</strong>:<br>" + roundedValue + "/100,000 habitantes")
         .style("left", x + "px")
         .style("top", (y - 1.1*height) + "px")
         .style("background-color", bgcolor)
@@ -319,8 +319,8 @@ function showTooltipMap(region, value, x, y, bgcolor, side) {
 
 function plotRegion(regionName){
 
-    const region_name = regionName.toUpperCase();
-    var region_id;
+    let region_name = regionName.toUpperCase();
+    let region_id;
     switch (region_name){
         case "CABO DELGADO":
             region_id = "CABODELGADO";
@@ -333,19 +333,19 @@ function plotRegion(regionName){
     }
 
     // Select the canvas element
-    var svg = d3.select("#" + region_id);
+    let svg = d3.select("#" + region_id);
     
     //Clear canvas
     svg.selectAll("*").remove();
 
     // Get the disease 
-    var disease_name = getActiveTabId();
+    let disease_name = getActiveTabId();
     
     // Define the dimensions and margins for the plot
-    const margin = { top: 10, right: 30, bottom: 30, left: 40 };
+    let margin = { top: 10, right: 30, bottom: 30, left: 40 };
     
     // Change the width and height considering the margins
-    const width  = +svg.attr("width") - margin.left - margin.right,
+    let width  = +svg.attr("width") - margin.left - margin.right,
           height = +svg.attr("height") - margin.top - margin.bottom;
 
     // Append SVG to the body
@@ -357,25 +357,30 @@ function plotRegion(regionName){
 
       data.forEach(function(d) {
         d.date = new Date(d.date);
-        d.rate = +d.rate;
-        d.rate_low = +d.rate_low; // Assuming these properties exist in your dataset
-        d.rate_up = +d.rate_up;
+        d.rate = +d.incident_cases;
+        d.rate_low = +d.incident_cases_low; // Assuming these properties exist in your dataset
+        d.rate_up = +d.incident_cases_upp;
       });
       
       // Filter data where type is "Observado"
-      const filteredData = data.filter(d => d.disease === disease_name && d.Region === region_name);
+      let filteredData = data.filter(d => d.disease === disease_name && d.Region === region_name);
 
       // Define scales for x and y axes
-      const xScale = d3.scaleTime().domain(d3.extent(filteredData, d => d.date)).range([0, width]);
-      const yScale = d3.scaleLinear().domain([0, d3.max(filteredData, d => d.rate_up)]).nice().range([height, 0]);
+      let xScale = d3.scaleTime()
+        .domain(d3.extent(filteredData, d => d.date))
+        .range([0, width]);
+
+      let yScale = d3.scaleLinear()
+        .domain([0, d3.max(filteredData, d => d.rate_up)])
+        .range([height, 0]);
 
       // Define x and y axes
-      const xAxis = d3.axisBottom(xScale)
+      let xAxis = d3.axisBottom(xScale)
         .ticks(5)
         .tickFormat(d3.timeFormat("%b/%y"))
         .tickSizeOuter(0);        
 
-      const yAxis = d3.axisLeft(yScale)
+      let yAxis = d3.axisLeft(yScale)
         .ticks(5)
         .tickSizeOuter(0);
 
@@ -389,7 +394,7 @@ function plotRegion(regionName){
           .call(yAxis);
 
       // Define line generator
-      const line = d3.line()
+      let line = d3.line()
           .x(d => xScale(d.date))
           .y(d => yScale(d.rate));
 
@@ -418,7 +423,8 @@ function plotRegion(regionName){
 }
 
 function plotRegions(){
-    const regionNames = ["CABO DELGADO","GAZA", "INHAMBANE", "MANICA", "MAPUTO","MAPUTO CITY", "NAMPULA", "NIASSA", "SOFALA","TETE","ZAMBEZIA"];
+    const regionNames = ["CABO DELGADO" ,"GAZA", "INHAMBANE", "MANICA", "MAPUTO", 
+                            "MAPUTO CITY", "NAMPULA", "NIASSA", "SOFALA","TETE","ZAMBEZIA"];
     regionNames.forEach(function(element) {
         plotRegion(element);
     });
