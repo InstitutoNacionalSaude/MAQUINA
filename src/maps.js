@@ -14,8 +14,33 @@ function getColor(value) {
     return color;
 }
 
+// Function to set the active tab
+function setActiveTab(tabId) {
+    $('.navbar a').removeClass('active'); // Remove 'active' class from all tabs
+    $('#' + tabId).addClass('active'); // Add 'active' class to the selected tab by ID
+  }
+
+// Function to get the ID of the active tab
+function getActiveTabId() {
+    return $('.navbar a.active').attr('id');
+}
+
+//Function to get the header of paragraph
+function diseaseName() {
+    //Get the disease name 
+    var disease_name = getActiveTabId();
+
+    // Translate disease name
+    var translatedName = (disease_name === "malaria") ? "Malária" : "Doenças Diarréicas";
+    
+    document.getElementById("disease_title").innerText = translatedName;
+}
+
 // Function to update the dataMap with the nth minimal date when the slider value changes
-function updateDataMap() {
+function updateDataMapPrevisto() {
+
+    //Get the disease name 
+    var disease_name = getActiveTabId();
 
     // Select the canvas element
     var canvas = d3.select("#rightMapCanvas");
@@ -53,7 +78,7 @@ function updateDataMap() {
 
             // Filter data by type "Observado"
             var previsto_data = data.filter(function(d) {
-                return d.type === "Previsto" & d.disease == "malaria";
+                return d.type === "Previsto" & d.disease == disease_name;
             });
 
             // Group observadoData by the "Region" column
@@ -137,38 +162,11 @@ function updateDataMap() {
 
 }
 
-// Function to show tooltip in region map
-function showTooltipMap(region, value, x, y, bgcolor, side) {
-    // Round the value
-    var roundedValue = Math.round(value);
-    
-    //Get object height
-    var height = d3.select("#" + side + "MapCanvas").attr("height")
+function updateDataMapObservado() {
 
-    // Create or update tooltip element
-    var tooltip = d3.select("#" + side + "TooltipMap");
-    if (tooltip.empty()) {        
-        tooltip = d3.select("#" + side + "MapContainer").append("div")
-            .attr("id", side + "TooltipMap")
-            .style("width", "50%")
-            .style("position", "relative")
-            .style("background-color", bgcolor)
-            .style("padding", "5px")
-            .style("border", "3px solid black")
-            .style("color", "white")
-            .style("pointer-events", "none");
-    }
-    
-    // Update tooltip content with region in bold and rounded value
-    tooltip.html("<strong>" + region + "</strong>: " + roundedValue + "<emph> " + side + "</emph>")
-        .style("left", x + "px")
-        .style("top", (y - 1.1*height) + "px")
-        .style("background-color", bgcolor)
-        .style("display", "block");
-}
+    //Get the disease name 
+    var disease_name = getActiveTabId();
 
-// Left side map: incidence of last week
-$(document).ready(function(){
     // Select the canvas element
     var canvas = d3.select("#leftMapCanvas");
     var width  = +canvas.attr("width");
@@ -202,7 +200,7 @@ $(document).ready(function(){
 
             // Filter data by type "Observado"
             var observed_data = data.filter(function(d) {
-                return d.type === "Observado" & d.disease == "malaria";
+                return d.type === "Observado" & d.disease == disease_name;
             });
 
             // Group observadoData by the "Region" column
@@ -228,6 +226,7 @@ $(document).ready(function(){
 
             // Process GeoJSON features
             mozambique.features.forEach(function(feature) {
+                
                 var region = feature.properties.ADM1_PT.toUpperCase();
                 var regionData = dataMap.get(region);
                 if (regionData) {
@@ -236,7 +235,6 @@ $(document).ready(function(){
                 } else {
                     console.warn("No data found for region:", region);
                     feature.properties.fill = "black";
-                    // Handle the case where no data is found for the region
                 }
 
                 context.beginPath();
@@ -277,20 +275,56 @@ $(document).ready(function(){
                 d3.select("#leftTooltipMap").style("display", "none");
             });
 
-            }).catch(function(error) {
-                console.error("Error loading CSV:", error);
-            });
-            
         }).catch(function(error) {
-            console.error("Error loading GeoJSON:", error);
+            console.error("Error loading CSV:", error);
         });
-    });
 
-//Right side map = previsto
+    }).catch(function(error) {
+        console.error("Error loading GeoJSON:", error);
+    });
+}
+
+// Function to show tooltip in region map
+function showTooltipMap(region, value, x, y, bgcolor, side) {
+    // Round the value
+    var roundedValue = Math.round(value);
+    
+    //Get object height
+    var height = d3.select("#" + side + "MapCanvas").attr("height")
+
+    // Create or update tooltip element
+    var tooltip = d3.select("#" + side + "TooltipMap");
+    if (tooltip.empty()) {        
+        tooltip = d3.select("#" + side + "MapContainer").append("div")
+            .attr("id", side + "TooltipMap")
+            .style("width", "50%")
+            .style("position", "relative")
+            .style("background-color", bgcolor)
+            .style("padding", "5px")
+            .style("border", "3px solid black")
+            .style("color", "white")
+            .style("pointer-events", "none");
+    }
+    
+    // Update tooltip content with region in bold and rounded value
+    tooltip.html("<strong>" + region + "</strong>: " + roundedValue + "<emph> " + side + "</emph>")
+        .style("left", x + "px")
+        .style("top", (y - 1.1*height) + "px")
+        .style("background-color", bgcolor)
+        .style("display", "block");
+}
+
+//Range slider to update right map
 $( document ).ready(function(){
 
-    // Initialize the dataMap
-    updateDataMap();
+     // Initially set the active tab to the first one
+     setActiveTab("malaria");
+
+     //Create the initial map
+     updateDataMapObservado();
+
+     //Get the initial disease name
+     diseaseName();
 
     //Rangeslider
     var mySlider = new rSlider({
@@ -302,7 +336,20 @@ $( document ).ready(function(){
         labels: true,
         set: [1],
         onChange: function (vals) {
-            updateDataMap();
+            updateDataMapPrevisto();
         }
     });
+
+    //Clicks on Malaria and Diarrhea
+    $('a[href="#malaria"]').click(function(){
+        updateDataMapPrevisto(); 
+        updateDataMapObservado();
+        diseaseName();
+    }); 
+
+    $('a[href="#diarrhea"]').click(function(){
+        updateDataMapPrevisto();
+        updateDataMapObservado();
+        diseaseName();
+    }); 
 });
