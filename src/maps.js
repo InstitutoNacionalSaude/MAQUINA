@@ -432,6 +432,7 @@ $( document ).ready(function(){
         range: false,
         tooltip: true,
         labels: true,
+        scale: false,
         set: [1],
         onChange: function (vals) {
             updateDataMapPrevisto();

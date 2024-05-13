@@ -52,6 +52,7 @@
 
     <title>MAQUINA Moçambique</title>
     <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
+    <script src="src/bootstrap.bundle.min.js"></script>
     <link rel="stylesheet" href="css/font-awesome.min.css">
 
     <!--jquery-->
@@ -72,14 +73,14 @@
 <body>
 <nav class="navbar navbar-expand-sm navbar-dark bg-dark px-5 fixed-top">
     <span class="navbar-brand">MÁQUINA:</span> 
-    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Doença">
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Doença">
         <span class="navbar-toggler-icon"></span>
     </button>
 
-    <div class="navbar-collapse collapse" id="navbarSupportedContent">
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
         <ul class="navbar-nav mr-auto">
             <li class="nav-item">
-                <a class="nav-link active" id="malaria" href="#malaria" onclick="setActiveTab('malaria')">Malária</a>
+                <a class="nav-link" id="malaria" href="#malaria" onclick="setActiveTab('malaria')">Malária</a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" id="diarrhea" href="#diarrhea" onclick="setActiveTab('diarrhea')">Doenças diarréicas</a>
@@ -135,7 +136,7 @@
                     <div class="card-header">
                         <span>Semana:</span>
                     </div>
-                    <div class="card-body">
+                    <div class="card-body" style="width: 100%;">
                         <div class="container" style="width: 100%;">    
                             <div class="slider-container">
                                 <input type="text" id="weekSlider" value="1"/>
