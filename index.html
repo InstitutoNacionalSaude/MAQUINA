@@ -107,14 +107,18 @@
                     </div>
                     <div class="card-body">
                         <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 justify-content-center">
-                            <div class="col mt-3" id="leftMapContainer" style="background-color: green; height: 500px;">
-                                <canvas id="leftMapCanvas" width="400" height="500"></canvas>
+                            <div class="col mt-3" id="leftMapContainer" style="height: 500px;">
+                                <h5 id="observadoMapText">Observação semana mais recente</h5>
+                                <h6 id="semanaObservadoMapText">Semana</h6>
+                                <svg id="leftMapCanvas" width="400" height="400"></svg>
                             </div>
                             <div class="col align-items-center">
                                 <span> GRADIENT </span>
                             </div>
-                            <div class="col mt-3" id="rightMapContainer" style="background-color: orange; height: 500px;">
-                                <canvas id="rightMapCanvas" width="400" height="500"></canvas>
+                            <div class="col mt-3" id="rightMapContainer" style="height: 500px;">
+                                <h5 id="previstoMapText">Previsto dentro de k semanas</h5>
+                                <h6 id="semanaPrevistoMapText">Semana</h6>
+                                <svg id="rightMapCanvas" width="400" height="400"></svg>
                             </div>
                         </div>
                     </div>
@@ -150,17 +154,17 @@
         </div>
         <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 justify-content-center">
             <div class="col">
-                <div class="card mt-3">
+                <div class="card mt-3 trendcard">
                     <div class="card-header">
                         Cabo Delgado
                     </div>
                     <div class="card-body">
-                        <svg id="CABODELGADO" width="400" height="200"></svg>
+                        <svg id="CABODELGADO" width="375" height="200"></svg>
                     </div>
                 </div>
             </div>
             <div class="col">
-                <div class="card mt-3">
+                <div class="card mt-3 trendcard">
                     <div class="card-header">
                         Gaza
                     </div>
@@ -170,7 +174,7 @@
                 </div>
             </div>
             <div class="col">
-                <div class="card mt-3">
+                <div class="card mt-3 trendcard">
                     <div class="card-header">
                         Inhambane
                     </div>
@@ -180,7 +184,7 @@
                 </div>
             </div>
             <div class="col">
-                <div class="card mt-3">
+                <div class="card mt-3 trendcard">
                     <div class="card-header">
                         Manica
                     </div>
@@ -192,7 +196,7 @@
         </div>
         <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 justify-content-center">
             <div class="col">
-                <div class="card mt-3">
+                <div class="card mt-3 trendcard">
                     <div class="card-header">
                         Maputo
                     </div>
@@ -202,7 +206,7 @@
                 </div>
             </div>
             <div class="col">
-                <div class="card mt-3">
+                <div class="card mt-3 trendcard">
                     <div class="card-header">
                         Maputo (cidade)
                     </div>
@@ -212,7 +216,7 @@
                 </div>
             </div>
             <div class="col">
-                <div class="card mt-3">
+                <div class="card mt-3 trendcard">
                     <div class="card-header">
                         Nampula
                     </div>
@@ -222,7 +226,7 @@
                 </div>
             </div>
             <div class="col">
-                <div class="card mt-3">
+                <div class="card mt-3 trendcard">
                     <div class="card-header">
                         Niassa
                     </div>
@@ -234,7 +238,7 @@
         </div>
         <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 justify-content-center">
             <div class="col">
-                <div class="card mt-3">
+                <div class="card mt-3 trendcard">
                     <div class="card-header">
                         Sofala
                     </div>
@@ -244,7 +248,7 @@
                 </div>
             </div>
             <div class="col">
-                <div class="card mt-3">
+                <div class="card mt-3 trendcard">
                     <div class="card-header">
                         Tete
                     </div>
@@ -254,7 +258,7 @@
                 </div>
             </div>
             <div class="col">
-                <div class="card mt-3">
+                <div class="card mt-3 trendcard">
                     <div class="card-header">
                         Zambézia
                     </div>

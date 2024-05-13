@@ -18,7 +18,7 @@ function getColor(value) {
 function setActiveTab(tabId) {
     $('.navbar a').removeClass('active'); // Remove 'active' class from all tabs
     $('#' + tabId).addClass('active'); // Add 'active' class to the selected tab by ID
-  }
+}
 
 // Function to get the ID of the active tab
 function getActiveTabId() {
@@ -37,39 +37,33 @@ function diseaseName() {
     document.getElementById("disease_title").innerText = translatedName;
 }
 
-// Function to update the dataMap with the nth minimal date when the slider value changes
 function updateDataMapPrevisto() {
 
     //Get the disease name 
-    const disease_name = getActiveTabId();
+    let disease_name = getActiveTabId();
 
-    // Select the canvas element
-    const canvas = d3.select("#rightMapCanvas");
-          width  = +canvas.attr("width"),
-          height = +canvas.attr("height");
+    // Select the SVG element
+    let svg = d3.select("#rightMapCanvas"),
+          width  = +svg.attr("width"),
+          height = +svg.attr("height");
 
-    // Get the 2D context of the canvas
-    const context = canvas.node().getContext("2d");
+    // Remove any existing content from the SVG
+    svg.selectAll("*").remove();
 
     // Define the map projection
-    const projection = d3.geoMercator()
-          .scale(1)
-          .translate([0, 0]);
-
-    // Set the background color
-    context.fillStyle = "blue";
-    context.fillRect(0, 0, width, height);
+    let projection = d3.geoMercator()
+                            .scale(1)
+                            .translate([0, 0]);
 
     // Define a path generator
-    const path = d3.geoPath()
-        .projection(projection)
-        .context(context);
+    let path = d3.geoPath()
+        .projection(projection);
 
     // Load GeoJSON data from file
     d3.json("map/mozambique.geojson").then(function(mozambique) {
         d3.csv("data/data.csv").then(function(data) {
 
-            // Fit the GeoJSON data to the canvas size
+            // Fit the GeoJSON data to the SVG size
             projection.fitSize([width, height], mozambique);
 
             // Convert "date" column to Date objects
@@ -77,119 +71,97 @@ function updateDataMapPrevisto() {
                 d.date = new Date(d.date);
             });
 
-            // Filter data by type "Observado"
-            const previsto_data = data.filter(function(d) {
-                return d.type === "Previsto" & d.disease == disease_name;
+            // Filter data by type "Previsto"
+            let previsto_data = data.filter(function(d) {
+                return d.type === "Previsto" && d.disease === disease_name;
             });
 
-            // Group observadoData by the "Region" column
-            var groupedData = d3.group(previsto_data, d => d.Region);
+            // Group previstoData by the "Region" column
+            let groupedData = d3.group(previsto_data, d => d.Region);
 
             // Create a map to store CSV data values by Region for "Previsto" type and maximum date
-            var dataMap = new Map();
+            let dataMap = new Map();
 
-            const nweeks = parseInt($('#weekSlider').val());
+            let nweeks = parseInt($('#weekSlider').val());
             
             // For each group, filter to keep only the row with the nth minimal date
             Array.from(groupedData.entries()).forEach(function([region, regionData]) {
-                var sortedDates = regionData.map(function(d) { return d.date; }).sort(function(a, b) { return a - b; }); // Sort dates in ascending order
+                const sortedDates = regionData.map(function(d) { return d.date; }).sort(function(a, b) { return a - b; }); // Sort dates in ascending order
                 if (sortedDates.length >= nweeks) {
-                    var nthMinDate = sortedDates[nweeks - 1]; // Retrieve the nth minimal date
-                    var nthMinDateRow = regionData.find(function(d) { return d.date.getTime() === nthMinDate.getTime(); }); // Find the row with the nth minimal date
+                    const nthMinDate = sortedDates[nweeks - 1]; // Retrieve the nth minimal date
+                    const nthMinDateRow = regionData.find(function(d) { return d.date.getTime() === nthMinDate.getTime(); }); // Find the row with the nth minimal date
                     dataMap.set(region, nthMinDateRow); // Store the row in the dataMap with the respective region key
                 } else {
                     dataMap.set(region, null); // If there are less than n dates, store null in the dataMap
                 }
             });
 
+            // Append a group for the map features
+            const mapGroup = svg.append("g");
+
             // Process GeoJSON features
-            mozambique.features.forEach(function(feature) {
-                var region = feature.properties.ADM1_PT.toUpperCase();
-                var regionData = dataMap.get(region);
-                if (regionData) {
-                    var rate = +regionData.rate; // Corrected line
-                    feature.properties.fill = getColor(rate); // Assume getColor() returns appropriate color based on value
-                } else {
-                    console.warn("No data found for region:", region);
-                    feature.properties.fill = "black";
-                    // Handle the case where no data is found for the region
-                }
-
-                context.beginPath();
-                context.fillStyle = feature.properties.fill;
-                path(feature);
-                context.fill();
-                context.strokeStyle = "white"; // Stroke color for country borders
-                context.stroke();
-            });
-
-            // Add event listener for mousemove event
-            canvas.on("mousemove", function(event) {
-                //Get mouse positions
-                const mouseX = event.offsetX;
-                      mouseY = event.offsetY;
-                
-                // Check if the mouse is over a region
-                mozambique.features.forEach(function(feature) {
-                    context.beginPath(); // Begin a new path for each feature
-                    path(feature);
-                    context.closePath(); // Close the path
-                    
-                    if (context.isPointInPath(mouseX, mouseY)) {
-                        // Display tooltip with region name and value
-                        var region = feature.properties.ADM1_PT.toUpperCase();
-                        var regionData = dataMap.get(region);                    
-                        if (regionData) {
-                            var rate = +regionData.rate; // Assuming "value" is the property to display
-                            showTooltipMap(region, rate, mouseX, mouseY, feature.properties.fill, "right");
-                        } else {
-                            console.warn("No data found for region:", region);
-                        }
+            mapGroup.selectAll("path")
+                .data(mozambique.features)
+                .enter()
+                .append("path")
+                .attr("d", path)
+                .attr("fill", function(feature) {
+                    const region = feature.properties.ADM1_PT.toUpperCase();
+                    const regionData = dataMap.get(region);
+                    if (regionData) {
+                        const rate = +regionData.rate; // Corrected line
+                        return getColor(rate); // Assume getColor() returns appropriate color based on value
+                    } else {
+                        console.warn("No data found for region:", region);
+                        return "black";
                     }
+                })
+                .attr("stroke", "white")
+                .on("mousemove", function(event, feature) {
+                    const region = feature.properties.ADM1_PT.toUpperCase();
+                    const regionData = dataMap.get(region);
+                    if (regionData) {
+                        const rate = +regionData.rate; // Assuming "value" is the property to display
+                        showTooltipMap(region, rate, event.offsetX, event.offsetY, getColor(rate), "right");
+                    } else {
+                        console.warn("No data found for region:", region);
+                    }
+                })
+                .on("mouseout", function() {
+                    d3.select("#rightTooltipMap").style("display", "none");
                 });
-            });
 
-            // Hide tooltip when mouse moves away from the canvas
-            canvas.on("mouseout", function() {
-                d3.select("#rightTooltipMap").style("display", "none");
-            });
-     
         }).catch(function(error) {
             console.error("Error loading CSV:", error);
-        });        
-        
+        });
+
     }).catch(function(error) {
         console.error("Error loading GeoJSON:", error);
     });
-
 }
+
 
 function updateDataMapObservado() {
 
     //Get the disease name 
-    const disease_name = getActiveTabId();
+    let disease_name = getActiveTabId();
 
-    // Select the canvas element
-    const canvas = d3.select("#leftMapCanvas"),
-          width  = +canvas.attr("width"),
-          height = +canvas.attr("height");
+    // Select the SVG element
+    let svg = d3.select("#leftMapCanvas"),
+          width  = +svg.attr("width"),
+          height = +svg.attr("height");
 
-    // Get the 2D context of the canvas
-    const context = canvas.node().getContext("2d");
+    // Remove any existing content from the SVG
+    svg.selectAll("*").remove();
 
     // Define the map projection
-    const projection = d3.geoMercator()
-                            .scale(1)
-                            .translate([0, 0]);
-
-    // Set the background color
-    context.fillStyle = "white";
-    context.fillRect(0, 0, width, height);
+    let projection = d3.geoMercator()
+                        .scale(1)
+                        .translate([0, 0]);
 
     // Define a path generator
-    const path = d3.geoPath()
-        .projection(projection)
-        .context(context);
+    let path = d3.geoPath()
+                  .projection(projection);
 
     // Load GeoJSON data from file
     d3.json("map/mozambique.geojson").then(function(mozambique) {
@@ -202,7 +174,7 @@ function updateDataMapObservado() {
 
             // Filter data by type "Observado"
             const observed_data = data.filter(function(d) {
-                return d.type === "Observado" & d.disease == disease_name;
+                return d.type === "Observado" && d.disease === disease_name;
             });
 
             // Group observadoData by the "Region" column
@@ -223,59 +195,43 @@ function updateDataMapObservado() {
                 dataMap.set(region, maxDateRow);
             });
 
-            // Fit the GeoJSON data to the canvas size
+            // Fit the GeoJSON data to the SVG size
             projection.fitSize([width, height], mozambique);
 
+            // Append a group for the map features
+            const mapGroup = svg.append("g");
+
             // Process GeoJSON features
-            mozambique.features.forEach(function(feature) {
-                
-                var region = feature.properties.ADM1_PT.toUpperCase();
-                var regionData = dataMap.get(region);
-                if (regionData) {
-                    var rate = +regionData.rate; // Corrected line
-                    feature.properties.fill = getColor(rate); // Assume getColor() returns appropriate color based on value
-                } else {
-                    console.warn("No data found for region:", region);
-                    feature.properties.fill = "black";
-                }
-
-                context.beginPath();
-                context.fillStyle = feature.properties.fill;
-                path(feature);
-                context.fill();
-                context.strokeStyle = "white"; // Stroke color for country borders
-                context.stroke();
-            });
-
-            // Add event listener for mousemove event
-            canvas.on("mousemove", function(event) {
-                var mouseX = event.offsetX;
-                var mouseY = event.offsetY;
-                
-                // Check if the mouse is over a region
-                mozambique.features.forEach(function(feature) {
-                    context.beginPath(); // Begin a new path for each feature
-                    path(feature);
-                    context.closePath(); // Close the path
-                    
-                    if (context.isPointInPath(mouseX, mouseY)) {
-                        // Display tooltip with region name and value
-                        var region = feature.properties.ADM1_PT.toUpperCase();
-                        var regionData = dataMap.get(region);                    
-                        if (regionData) {
-                            var rate = +regionData.rate; // Assuming "value" is the property to display
-                            showTooltipMap(region, rate, mouseX, mouseY, feature.properties.fill, "left");
-                        } else {
-                            console.warn("No data found for region:", region);
-                        }
+            mapGroup.selectAll("path")
+                .data(mozambique.features)
+                .enter()
+                .append("path")
+                .attr("d", path)
+                .attr("fill", function(feature) {
+                    var region = feature.properties.ADM1_PT.toUpperCase();
+                    var regionData = dataMap.get(region);
+                    if (regionData) {
+                        var rate = +regionData.rate;
+                        return getColor(rate); // Assume getColor() returns appropriate color based on value
+                    } else {
+                        console.warn("No data found for region:", region);
+                        return "black";
                     }
+                })
+                .attr("stroke", "white")
+                .on("mousemove", function(event, feature) {
+                    var region = feature.properties.ADM1_PT.toUpperCase();
+                    var regionData = dataMap.get(region);
+                    if (regionData) {
+                        var rate = +regionData.rate; // Assuming "value" is the property to display
+                        showTooltipMap(region, rate, event.offsetX, event.offsetY, getColor(rate), "left");
+                    } else {
+                        console.warn("No data found for region:", region);
+                    }
+                })
+                .on("mouseout", function() {
+                    d3.select("#leftTooltipMap").style("display", "none");
                 });
-            });
-
-            // Hide tooltip when mouse moves away from the canvas
-            canvas.on("mouseout", function() {
-                d3.select("#leftTooltipMap").style("display", "none");
-            });
 
         }).catch(function(error) {
             console.error("Error loading CSV:", error);
@@ -310,7 +266,7 @@ function showTooltipMap(region, value, x, y, bgcolor, side) {
     }
     
     // Update tooltip content with region in bold and rounded value
-    tooltip.html("<strong>" + region + "</strong>:<br>" + roundedValue + "/100,000 habitantes")
+    tooltip.html("<strong>" + region + "</strong>:<br>" + roundedValue + "/100 mil habitantes")
         .style("left", x + "px")
         .style("top", (y - 1.1*height) + "px")
         .style("background-color", bgcolor)
@@ -331,6 +287,9 @@ function plotRegion(regionName){
         default:
             region_id = region_name;
     }
+
+    //Resize the plot
+    resizeTrendPlot(region_id);
 
     // Select the canvas element
     let svg = d3.select("#" + region_id);
@@ -401,7 +360,8 @@ function plotRegion(regionName){
       // Show confidence interval
       plot.append("path")
         .datum(filteredData)
-        .attr("fill", "#cce5df")
+        .attr("fill", "#2a788eff")
+        .attr("opacity", 0.5)
         .attr("stroke", "none")
         .attr("d", d3.area()
             .x(function(d) { return xScale(d.date); })
@@ -429,6 +389,19 @@ function plotRegions(){
         plotRegion(element);
     });
 }
+
+function resizeTrendPlot(idelement){
+    const parent = document.getElementById(idelement).parentNode;
+    const svg = parent.querySelector('svg');
+    function scaleSVG() {
+        const { width, height } = parent.getBoundingClientRect();
+        svg.setAttribute('height', 0.9*height);
+        svg.setAttribute('width', 0.9*width);
+    }
+    scaleSVG();
+}
+
+
 
 //Range slider to update right map
 $( document ).ready(function(){
@@ -473,5 +446,10 @@ $( document ).ready(function(){
         diseaseName();
         plotRegions();
     }); 
+
+    //Add listener to resize and replot
+    $(window).resize(function () { 
+        plotRegions();
+     });
 });
 
