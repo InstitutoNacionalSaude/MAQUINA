@@ -70,20 +70,24 @@
 </head>
 
 <body>
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark px-5 fixed-top">
+<nav class="navbar navbar-expand-sm navbar-dark bg-dark px-5 fixed-top">
     <span class="navbar-brand">MÁQUINA:</span> 
-    <div class="collapse navbar-collapse" id="navbarSupportedContent">
-        <ul class="navbar-nav me-auto">
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Doença">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="navbar-collapse collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav mr-auto">
             <li class="nav-item">
                 <a class="nav-link active" id="malaria" href="#malaria" onclick="setActiveTab('malaria')">Malária</a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" id="diarrhea" href="#diarrhea" onclick="setActiveTab('diarrhea')">Doenças Diarréicas</a>
+                <a class="nav-link" id="diarrhea" href="#diarrhea" onclick="setActiveTab('diarrhea')">Doenças diarréicas</a>
             </li>            
         </ul>
         <ul class="navbar-nav ms-auto navbar-right">
             <li class="nav-item ms-auto">
-                <a class="nav-link" href="Javascript:window.print();">Salvar pdf</a>
+                <a class="nav-link" href="Javascript:window.print();">PDF</a>
             </li> 
         </ul>
     </div>

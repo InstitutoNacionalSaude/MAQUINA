@@ -42,6 +42,9 @@ function updateDataMapPrevisto() {
     //Get the disease name 
     let disease_name = getActiveTabId();
 
+    //Change size
+    resizePlot("rightMapCanvas");
+
     // Select the SVG element
     let svg = d3.select("#rightMapCanvas"),
           width  = +svg.attr("width"),
@@ -140,11 +143,13 @@ function updateDataMapPrevisto() {
     });
 }
 
-
 function updateDataMapObservado() {
 
     //Get the disease name 
     let disease_name = getActiveTabId();
+
+    //Resize the map
+    resizePlot("leftMapCanvas");
 
     // Select the SVG element
     let svg = d3.select("#leftMapCanvas"),
@@ -289,7 +294,7 @@ function plotRegion(regionName){
     }
 
     //Resize the plot
-    resizeTrendPlot(region_id);
+    resizePlot(region_id);
 
     // Select the canvas element
     let svg = d3.select("#" + region_id);
@@ -396,7 +401,7 @@ function plotRegions(){
     });
 }
 
-function resizeTrendPlot(idelement){
+function resizePlot(idelement){
     const parent = document.getElementById(idelement).parentNode;
     const svg = parent.querySelector('svg');
     function scaleSVG() {
@@ -406,8 +411,6 @@ function resizeTrendPlot(idelement){
     }
     scaleSVG();
 }
-
-
 
 //Range slider to update right map
 $( document ).ready(function(){
