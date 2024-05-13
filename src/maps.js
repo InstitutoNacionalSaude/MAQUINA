@@ -25,14 +25,15 @@ function getActiveTabId() {
     return $('.navbar a.active').attr('id');
 }
 
-//Function to get the header of paragraph
+// Function to get the header of paragraph
 function diseaseName() {
-    //Get the disease name 
+    // Get the disease name 
     var disease_name = getActiveTabId();
 
     // Translate disease name
     var translatedName = (disease_name === "malaria") ? "Malária" : "Doenças Diarréicas";
     
+    // Change the title of disease
     document.getElementById("disease_title").innerText = translatedName;
 }
 
@@ -40,27 +41,27 @@ function diseaseName() {
 function updateDataMapPrevisto() {
 
     //Get the disease name 
-    var disease_name = getActiveTabId();
+    const disease_name = getActiveTabId();
 
     // Select the canvas element
-    var canvas = d3.select("#rightMapCanvas");
-    width = canvas.attr("width"),
-    height = canvas.attr("height");
+    const canvas = d3.select("#rightMapCanvas");
+          width  = +canvas.attr("width"),
+          height = +canvas.attr("height");
 
     // Get the 2D context of the canvas
-    var context = canvas.node().getContext("2d");
+    const context = canvas.node().getContext("2d");
 
     // Define the map projection
-    var projection = d3.geoMercator()
-        .scale(1)
-        .translate([0, 0]);
+    const projection = d3.geoMercator()
+          .scale(1)
+          .translate([0, 0]);
 
     // Set the background color
     context.fillStyle = "blue";
     context.fillRect(0, 0, width, height);
 
     // Define a path generator
-    var path = d3.geoPath()
+    const path = d3.geoPath()
         .projection(projection)
         .context(context);
 
@@ -77,7 +78,7 @@ function updateDataMapPrevisto() {
             });
 
             // Filter data by type "Observado"
-            var previsto_data = data.filter(function(d) {
+            const previsto_data = data.filter(function(d) {
                 return d.type === "Previsto" & d.disease == disease_name;
             });
 
@@ -87,7 +88,7 @@ function updateDataMapPrevisto() {
             // Create a map to store CSV data values by Region for "Previsto" type and maximum date
             var dataMap = new Map();
 
-            var nweeks = parseInt($('#weekSlider').val());
+            const nweeks = parseInt($('#weekSlider').val());
             
             // For each group, filter to keep only the row with the nth minimal date
             Array.from(groupedData.entries()).forEach(function([region, regionData]) {
@@ -124,8 +125,9 @@ function updateDataMapPrevisto() {
 
             // Add event listener for mousemove event
             canvas.on("mousemove", function(event) {
-                var mouseX = event.offsetX;
-                var mouseY = event.offsetY;
+                //Get mouse positions
+                const mouseX = event.offsetX;
+                      mouseY = event.offsetY;
                 
                 // Check if the mouse is over a region
                 mozambique.features.forEach(function(feature) {
@@ -165,27 +167,27 @@ function updateDataMapPrevisto() {
 function updateDataMapObservado() {
 
     //Get the disease name 
-    var disease_name = getActiveTabId();
+    const disease_name = getActiveTabId();
 
     // Select the canvas element
-    var canvas = d3.select("#leftMapCanvas");
-    var width  = +canvas.attr("width");
-    var height = +canvas.attr("height");
+    const canvas = d3.select("#leftMapCanvas"),
+          width  = +canvas.attr("width"),
+          height = +canvas.attr("height");
 
     // Get the 2D context of the canvas
-    var context = canvas.node().getContext("2d");
+    const context = canvas.node().getContext("2d");
 
     // Define the map projection
-    var projection = d3.geoMercator()
-        .scale(1)
-        .translate([0, 0]);
+    const projection = d3.geoMercator()
+                            .scale(1)
+                            .translate([0, 0]);
 
     // Set the background color
     context.fillStyle = "white";
     context.fillRect(0, 0, width, height);
 
     // Define a path generator
-    var path = d3.geoPath()
+    const path = d3.geoPath()
         .projection(projection)
         .context(context);
 
@@ -199,12 +201,12 @@ function updateDataMapObservado() {
             });
 
             // Filter data by type "Observado"
-            var observed_data = data.filter(function(d) {
+            const observed_data = data.filter(function(d) {
                 return d.type === "Observado" & d.disease == disease_name;
             });
 
             // Group observadoData by the "Region" column
-            var groupedData = d3.group(observed_data, d => d.Region);
+            const groupedData = d3.group(observed_data, d => d.Region);
 
             // Create a map to store CSV data values by Region for "Observado" type and maximum date
             var dataMap = new Map();
@@ -286,11 +288,12 @@ function updateDataMapObservado() {
 
 // Function to show tooltip in region map
 function showTooltipMap(region, value, x, y, bgcolor, side) {
+    
     // Round the value
-    var roundedValue = Math.round(value);
+    const roundedValue = Math.round(value);
     
     //Get object height
-    var height = d3.select("#" + side + "MapCanvas").attr("height")
+    const height = d3.select("#" + side + "MapCanvas").attr("height")
 
     // Create or update tooltip element
     var tooltip = d3.select("#" + side + "TooltipMap");
@@ -312,6 +315,113 @@ function showTooltipMap(region, value, x, y, bgcolor, side) {
         .style("top", (y - 1.1*height) + "px")
         .style("background-color", bgcolor)
         .style("display", "block");
+}
+
+function plotRegion(regionName){
+
+    const region_name = regionName.toUpperCase();
+    var region_id;
+    switch (region_name){
+        case "CABO DELGADO":
+            region_id = "CABODELGADO";
+            break;
+        case "MAPUTO CITY":
+            region_id = "MAPUTOCIDADE";
+            break;
+        default:
+            region_id = region_name;
+    }
+
+    // Select the canvas element
+    var svg = d3.select("#" + region_id);
+    
+    //Clear canvas
+    svg.selectAll("*").remove();
+
+    // Get the disease 
+    var disease_name = getActiveTabId();
+    
+    // Define the dimensions and margins for the plot
+    const margin = { top: 10, right: 30, bottom: 30, left: 40 };
+    
+    // Change the width and height considering the margins
+    const width  = +svg.attr("width") - margin.left - margin.right,
+          height = +svg.attr("height") - margin.top - margin.bottom;
+
+    // Append SVG to the body
+    let plot = svg.append("g")
+                .attr("transform", `translate(${margin.left},${margin.top})`);
+
+    // Read data from CSV file
+    d3.csv("data/data.csv").then(function(data) {
+
+      data.forEach(function(d) {
+        d.date = new Date(d.date);
+        d.rate = +d.rate;
+        d.rate_low = +d.rate_low; // Assuming these properties exist in your dataset
+        d.rate_up = +d.rate_up;
+      });
+      
+      // Filter data where type is "Observado"
+      const filteredData = data.filter(d => d.disease === disease_name && d.Region === region_name);
+
+      // Define scales for x and y axes
+      const xScale = d3.scaleTime().domain(d3.extent(filteredData, d => d.date)).range([0, width]);
+      const yScale = d3.scaleLinear().domain([0, d3.max(filteredData, d => d.rate_up)]).nice().range([height, 0]);
+
+      // Define x and y axes
+      const xAxis = d3.axisBottom(xScale)
+        .ticks(5)
+        .tickFormat(d3.timeFormat("%b/%y"))
+        .tickSizeOuter(0);        
+
+      const yAxis = d3.axisLeft(yScale)
+        .ticks(5)
+        .tickSizeOuter(0);
+
+      // Append x axis to the plot
+      plot.append("g")
+          .attr("transform", `translate(0, ${height})`)
+          .call(xAxis);
+
+      // Append y axis to the plot
+      plot.append("g")
+          .call(yAxis);
+
+      // Define line generator
+      const line = d3.line()
+          .x(d => xScale(d.date))
+          .y(d => yScale(d.rate));
+
+      // Show confidence interval
+      plot.append("path")
+        .datum(filteredData)
+        .attr("fill", "#cce5df")
+        .attr("stroke", "none")
+        .attr("d", d3.area()
+            .x(function(d) { return xScale(d.date); })
+            .y0(function(d) { return yScale(d.rate_low); })
+            .y1(function(d) { return yScale(d.rate_up); })
+        );
+
+      // Append path for the line chart
+      plot.append("path")
+          .datum(filteredData)
+          .attr("fill", "none")
+          .attr("stroke", "#404040")
+          .attr("stroke-width", 1.5)
+          .attr("d", line);
+
+    }).catch(function(error) {
+      console.log("Error reading data:", error);
+    });
+}
+
+function plotRegions(){
+    const regionNames = ["CABO DELGADO","GAZA", "INHAMBANE", "MANICA", "MAPUTO","MAPUTO CITY", "NAMPULA", "NIASSA", "SOFALA","TETE","ZAMBEZIA"];
+    regionNames.forEach(function(element) {
+        plotRegion(element);
+    });
 }
 
 //Range slider to update right map
@@ -340,16 +450,22 @@ $( document ).ready(function(){
         }
     });
 
+    //Create the plots for trends
+    plotRegions();
+
     //Clicks on Malaria and Diarrhea
     $('a[href="#malaria"]').click(function(){
         updateDataMapPrevisto(); 
         updateDataMapObservado();
         diseaseName();
+        plotRegions();
     }); 
 
     $('a[href="#diarrhea"]').click(function(){
         updateDataMapPrevisto();
         updateDataMapObservado();
         diseaseName();
+        plotRegions();
     }); 
 });
+
