@@ -301,7 +301,7 @@ function plotRegion(regionName){
     let disease_name = getActiveTabId();
     
     // Define the dimensions and margins for the plot
-    let margin = { top: 10, right: 30, bottom: 30, left: 40 };
+    let margin = { top: 10, right: 30, bottom: 50, left: 40 };
     
     // Change the width and height considering the margins
     let width  = +svg.attr("width") - margin.left - margin.right,
@@ -346,7 +346,13 @@ function plotRegion(regionName){
       // Append x axis to the plot
       plot.append("g")
           .attr("transform", `translate(0, ${height})`)
-          .call(xAxis);
+          .call(xAxis)
+          .selectAll("text")  
+          .style("text-anchor", "end")
+          .attr("dx", "-.8em")
+          .attr("dy", "-.5em")
+          .attr("transform", "rotate(-90)");
+
 
       // Append y axis to the plot
       plot.append("g")
