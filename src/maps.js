@@ -37,10 +37,19 @@ function diseaseName() {
     document.getElementById("disease_title").innerText = translatedName;
 }
 
+function updatePrevistoTitle(kweek){
+    // Select the element with id "semanaObservadoMapText"
+    let element = document.querySelector("#previstoMapText");
+    element.textContent = "Previsto dentro de " + kweek + (kweek > 1 ? " semanas" : " semana");
+}
+
 function updateDataMapPrevisto() {
 
     //Get the disease name 
     let disease_name = getActiveTabId();
+
+    // Select the element with id "semanaObservadoMapText"
+    let element = document.querySelector("#semanaPrevistoMapText");
 
     //Change size
     resizePlot("rightMapCanvas");
@@ -86,6 +95,9 @@ function updateDataMapPrevisto() {
             let dataMap = new Map();
 
             let nweeks = parseInt($('#weekSlider').val());
+
+            //Update the title
+            updatePrevistoTitle(nweeks);
             
             // For each group, filter to keep only the row with the nth minimal date
             Array.from(groupedData.entries()).forEach(function([region, regionData]) {
@@ -94,6 +106,11 @@ function updateDataMapPrevisto() {
                     const nthMinDate = sortedDates[nweeks - 1]; // Retrieve the nth minimal date
                     const nthMinDateRow = regionData.find(function(d) { return d.date.getTime() === nthMinDate.getTime(); }); // Find the row with the nth minimal date
                     dataMap.set(region, nthMinDateRow); // Store the row in the dataMap with the respective region key
+
+                    // Replace the text content for subtitle
+                    const format = d3.timeFormat("%d-%b-%y");
+                    element.textContent = "Semana epidemiológica " + nthMinDateRow.epiweek + "/" + (nthMinDateRow.epiyear - 2000) + " (" + format(nthMinDateRow.date) + ")";
+
                 } else {
                     dataMap.set(region, null); // If there are less than n dates, store null in the dataMap
                 }
@@ -151,6 +168,9 @@ function updateDataMapObservado() {
     //Resize the map
     resizePlot("leftMapCanvas");
 
+    // Select the element with id "semanaObservadoMapText"
+    let element = document.querySelector("#semanaObservadoMapText");
+
     // Select the SVG element
     let svg = d3.select("#leftMapCanvas"),
           width  = +svg.attr("width"),
@@ -197,7 +217,13 @@ function updateDataMapObservado() {
                         return maxDateRow;
                     }
                 }, null);
+
+                //Get the data for the map
                 dataMap.set(region, maxDateRow);
+
+                // Replace the text content for subtitle
+                const format = d3.timeFormat("%d-%b-%y");
+                element.textContent = "Semana epidemiológica " + maxDateRow.epiweek + "/" + (maxDateRow.epiyear - 2000) + " (" + format(maxDateRow.date) + ")";
             });
 
             // Fit the GeoJSON data to the SVG size
@@ -352,8 +378,6 @@ function plotRegion(regionName){
             const epiweek = dataPoint.epiweek;
             const epiyear = dataPoint.epiyear - 2000;
 
-
-            console.log(epiweek);
             return epiweek + "/" + epiyear;
         })
         .tickSizeOuter(0);
