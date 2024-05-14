@@ -306,7 +306,7 @@ function plotRegion(regionName){
     let disease_name = getActiveTabId();
     
     // Define the dimensions and margins for the plot
-    let margin = { top: 10, right: 30, bottom: 50, left: 40 };
+    let margin = { top: 20, right: 30, bottom: 50, left: 40 };
     
     // Change the width and height considering the margins
     let width  = +svg.attr("width") - margin.left - margin.right,
@@ -320,10 +320,11 @@ function plotRegion(regionName){
     d3.csv("data/data.csv").then(function(data) {
 
       data.forEach(function(d) {
-        d.date = new Date(d.date);
-        d.rate = +d.incident_cases;
+        d.date     = new Date(d.date);
+        d.rate     = +d.incident_cases;
         d.rate_low = +d.incident_cases_low; // Assuming these properties exist in your dataset
-        d.rate_up = +d.incident_cases_upp;
+        d.rate_up  = +d.incident_cases_upp;
+        d.epiweek  = +d.epiweek;
       });
       
       // Filter data where type is "Observado"
@@ -335,14 +336,27 @@ function plotRegion(regionName){
         .range([0, width]);
 
       let yScale = d3.scaleLinear()
-        .domain([0, d3.max(filteredData, d => d.rate_up)])
+        .domain([0, 1.1*Math.max(d3.max(filteredData, d => d.rate_up), d3.max(filteredData, d => d.rate_up))])
         .range([height, 0]);
 
       // Define x and y axes
+      // Define x and y axes
       let xAxis = d3.axisBottom(xScale)
         .ticks(5)
-        .tickFormat(d3.timeFormat("%b/%y"))
-        .tickSizeOuter(0);        
+        .tickFormat((date) => {
+            // Format ticks as date + epiweek if available
+            let dt = new Date(date);
+            dt.setDate(dt.getDate() - 7);
+            
+            const dataPoint = filteredData.find(d => d.date <= date && d.date > dt);
+            const epiweek = dataPoint.epiweek;
+            const epiyear = dataPoint.epiyear - 2000;
+
+
+            console.log(epiweek);
+            return epiweek + "/" + epiyear;
+        })
+        .tickSizeOuter(0);
 
       let yAxis = d3.axisLeft(yScale)
         .ticks(5)
@@ -351,17 +365,31 @@ function plotRegion(regionName){
       // Append x axis to the plot
       plot.append("g")
           .attr("transform", `translate(0, ${height})`)
-          .call(xAxis)
-          .selectAll("text")  
-          .style("text-anchor", "end")
-          .attr("dx", "-.8em")
-          .attr("dy", "-.5em")
-          .attr("transform", "rotate(-90)");
+          .call(xAxis);
 
 
       // Append y axis to the plot
       plot.append("g")
           .call(yAxis);
+
+
+        // Define a second x axis at the top
+        let topXAxis = d3.axisTop(xScale)
+            .ticks(5)
+            .tickFormat(d3.timeFormat("%b/%y"))
+            .tickSizeOuter(0);
+
+            // Append the top x axis
+            plot.append("g")
+            .call(topXAxis);
+
+        // Append label to the top axis
+        plot.append("text")
+            .attr("class", "axis-label")
+            .attr("x", width / 2)
+            .attr("y", height + margin.bottom/2 + margin.top/2) 
+            .style("text-anchor", "middle")
+            .text("Semana epidemiológica");
 
       // Define line generator
       let line = d3.line()
