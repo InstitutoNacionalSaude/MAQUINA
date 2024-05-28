@@ -1,5 +1,7 @@
+// open /Applications/Google\ Chrome.app --args --user-data-dir=.--disable-web-security
+
 //Create Datetime function shorthand
-var DateTime = luxon.DateTime;
+const DateTime = luxon.DateTime;
 
 // Define a custom formatter to concatenate epiweek and epiyear
 function rateCiFormatter(cell, formatterParams, onRendered) {
@@ -114,6 +116,7 @@ function loadCSVData(url, callback) {
         });
 }
 
+//Create the table
 function getTable(){
     
     // Load data and create the Tabulator table
@@ -205,7 +208,6 @@ function getTable(){
 }
 
 // Define getColor function using Viridis color scale
-// open /Applications/Google\ Chrome.app --args --user-data-dir=.--disable-web-security
 function getColor(value, maxvalue, minvalue) {
     // Define Viridis color scale
     let viridisScale = d3.scaleSequential()
@@ -255,6 +257,16 @@ function updateTableTitle(kweek){
     element.innerHTML = "Casos observados e previstos (dentro de " + kweek + (kweek > 1 ? " semanas" : " semana") + ")";
 }
 
+function updateLegendTitle(){
+    // Select the element with id "semanaObservadoMapText"
+    let element = document.querySelector("#legendasubtitle");
+
+    //Decide whether its casos or taxa
+    let taxa =  document.getElementById('casosswitch').checked;
+
+    element.innerHTML = taxa ? "Taxa por 100 mil habitantes": "Casos totales";
+}
+
 function updateTableFooter(epiweekobs, epiyearobs, dateobs, epiweekpred, epiyearpred, datepred){
 
     const options = {
@@ -277,6 +289,9 @@ function updateDataMapPrevisto() {
 
     // Select the element with id "semanaObservadoMapText"
     let element = document.querySelector("#semanaPrevistoMapText");
+
+    //Decide whether its casos or taxa
+    let taxa =  document.getElementById('casosswitch').checked;
 
     //Change size
     resizePlot("rightMapCanvas");
@@ -315,8 +330,8 @@ function updateDataMapPrevisto() {
             });
 
             //Get max and minimum value for the colours
-            let maxcolor = d3.max(disease_data, d => +d.rate);
-            let mincolor = d3.min(disease_data, d => +d.rate);
+            let maxcolor = d3.max(disease_data, d => taxa ? +d.rate: +d.incident_cases),
+                mincolor = d3.min(disease_data, d => taxa ? +d.rate: +d.incident_cases);
 
             // Filter data by type "Previsto"
             let previsto_data = data.filter(function(d) {
@@ -364,8 +379,8 @@ function updateDataMapPrevisto() {
                     let region = feature.properties.ADM1_PT.toUpperCase();
                     let regionData = dataMap.get(region);
                     if (regionData) {
-                        let rate = +regionData.rate; // Corrected line
-                        return getColor(rate, maxcolor, mincolor); // Assume getColor() returns appropriate color based on value
+                        let val = taxa ? +regionData.rate: +regionData.incident_cases; 
+                        return getColor(val, maxcolor, mincolor); 
                     } else {
                         console.warn("No data found for region:", region);
                         return "black";
@@ -376,8 +391,8 @@ function updateDataMapPrevisto() {
                     let region = feature.properties.ADM1_PT.toUpperCase();
                     let regionData = dataMap.get(region);
                     if (regionData) {
-                        let rate = +regionData.rate; // Assuming "value" is the property to display
-                        showTooltipMap(region, rate, event.offsetX, event.offsetY, getColor(rate, maxcolor, mincolor), "right");
+                        let val = taxa ? +regionData.rate: +regionData.incident_cases;
+                        showTooltipMap(region, val, event.offsetX, event.offsetY, getColor(val, maxcolor, mincolor), "right", taxa);
                     } else {
                         console.warn("No data found for region:", region);
                     }
@@ -406,6 +421,9 @@ function updateDataMapObservado() {
     // Select the element with id "semanaObservadoMapText"
     let element = document.querySelector("#semanaObservadoMapText");
 
+    //Decide whether its casos or taxa
+    let taxa =  document.getElementById('casosswitch').checked;
+
     // Select the SVG element
     let svg = d3.select("#leftMapCanvas"),
         width  = +svg.attr("width"),
@@ -424,165 +442,168 @@ function updateDataMapObservado() {
                   .projection(projection);
 
      // Change size
-resizePlot("gradientMap");
+    resizePlot("gradientMap");
 
-// Select the SVG element
-let svggrad = d3.select("#gradientMap");
+    // Select the SVG element
+    let svggrad = d3.select("#gradientMap");
 
-// Remove any existing content from the SVG
-svggrad.selectAll("*").remove();
+    // Remove any existing content from the SVG
+    svggrad.selectAll("*").remove();
 
-// Define the dimensions and margins for the plot
-let margin = { top: 50, right: 100, bottom: 30, left: 150 };
+    // Define the dimensions and margins for the plot
+    let margin = { top: 50, right: 50, bottom: 30, left: 40 };
 
-// Get the width and height from the SVG element
-let width_grad  = +svggrad.attr("width"),
-    height_grad = +svggrad.attr("height");
+    // Get the width and height from the SVG element
+    let width_grad  = +svggrad.attr("width"),
+        height_grad = +svggrad.attr("height");
 
-// Calculate the inner width and height considering the margins
-let legendWidth = width_grad - margin.left - margin.right,
-    legendHeight = height_grad - margin.top - margin.bottom;              
+    // Calculate the inner width and height considering the margins
+    let legendWidth = width_grad - margin.left - margin.right,
+        legendHeight = height_grad - margin.top - margin.bottom;              
 
-// Load GeoJSON data from file
-d3.json("map/mozambique.geojson").then(function(mozambique) {
-    d3.csv("data/data.csv").then(function(data) {
+    // Load GeoJSON data from file
+    d3.json("map/mozambique.geojson").then(function(mozambique) {
+        d3.csv("data/data.csv").then(function(data) {
 
-        // Convert "date" column to Date objects
-        data.forEach(function(d) {
-            d.date = new Date(d.date);
-        });
-
-        let disease_data = data.filter(function(d) {
-            return d.disease === disease_name;
-        });
-
-        // Get max and minimum value for the colours
-        let maxcolor = d3.max(disease_data, d => +d.rate),
-            mincolor = d3.min(disease_data, d => +d.rate);
-
-        // Create the gradient
-        // Append a defs (definitions) element to hold the gradient definition
-        let defs = svggrad.append("defs");
-
-        // Append a linear gradient element to the defs
-        let linearGradient = defs.append("linearGradient")
-            .attr("id", "linear-gradient")
-            .attr("x1", "0%")
-            .attr("y1", "0%")
-            .attr("x2", "0%")
-            .attr("y2", "100%"); // Gradient from top to bottom
-
-        // Set the stops for the gradient
-        for (let i = 0; i <= 100; i++) {
-            linearGradient.append("stop")
-                .attr("offset", `${i}%`)
-                .attr("stop-color", getColor(mincolor + ((100 - i) / 100) * (maxcolor - mincolor), maxcolor, mincolor));
-        }
-
-        // Create a rectangle and apply the gradient
-        svggrad.append("rect")
-            .attr("x", margin.left)
-            .attr("y", margin.top)
-            .attr("width", legendWidth)
-            .attr("height", legendHeight)
-            .style("fill", "url(#linear-gradient)");
-
-        // Create a scale for the y axis
-        let yScalegrad = d3.scaleLinear()
-            .domain([maxcolor, mincolor]) // Reversed domain
-            .range([margin.top, height_grad - margin.bottom]); // Ensure this range covers the correct height
-
-        // Add y axis
-        let yAxisgrad = d3.axisRight(yScalegrad)
-            .ticks(10)
-            .tickSizeOuter(0);
-
-        svggrad.append("g")
-            .attr("class", "y axis")
-            .attr("transform", `translate(${margin.left + legendWidth}, 0)`)
-            .call(yAxisgrad);
-
-            // Filter data by type "Observado"
-            let observed_data = data.filter(function(d) {
-                return d.type === "Observado" && d.disease === disease_name;
+            // Convert "date" column to Date objects
+            data.forEach(function(d) {
+                d.date = new Date(d.date);
             });
 
-            // Group observadoData by the "Region" column
-            let groupedData = d3.group(observed_data, d => d.Region);
-
-            // Create a map to store CSV data values by Region for "Observado" type and maximum date
-            let dataMap = new Map();
-
-            // For each group, filter to keep only the row with the highest date
-            Array.from(groupedData.entries()).forEach(function([region, regionData]) {
-                let maxDateRow = regionData.reduce(function(maxDateRow, currentRow) {
-                    if (!maxDateRow || currentRow.date > maxDateRow.date) {
-                        return currentRow;
-                    } else {
-                        return maxDateRow;
-                    }
-                }, null);
-
-                //Get the data for the map
-                dataMap.set(region, maxDateRow);
-
-                // Replace the text content for subtitle
-                let format = d3.timeFormat("%d-%b-%y");
-                element.textContent = "Semana epidemiológica " + maxDateRow.epiweek + "/" + (maxDateRow.epiyear - 2000) + " (" + format(maxDateRow.date) + ")";
+            let disease_data = data.filter(function(d) {
+                return d.disease === disease_name;
             });
 
-            // Fit the GeoJSON data to the SVG size
-            projection.fitSize([width, height], mozambique);
+            // Get max and minimum value for the colours
+            let maxcolor = d3.max(disease_data, d => taxa ? +d.rate: +d.incident_cases),
+                mincolor = d3.min(disease_data, d => taxa ? +d.rate: +d.incident_cases);
 
-            // Append a group for the map features
-            let mapGroup = svg.append("g");
+            // Create the gradient
+            // Append a defs (definitions) element to hold the gradient definition
+            let defs = svggrad.append("defs");
 
-            // Process GeoJSON features
-            mapGroup.selectAll("path")
-                .data(mozambique.features)
-                .enter()
-                .append("path")
-                .attr("d", path)
-                .attr("fill", function(feature) {
-                    let region = feature.properties.ADM1_PT.toUpperCase();
-                    let regionData = dataMap.get(region);
-                    if (regionData) {
-                        let rate = +regionData.rate;
-                        return getColor(rate, maxcolor, mincolor); // Assume getColor() returns appropriate color based on value
-                    } else {
-                        console.warn("No data found for region:", region);
-                        return "black";
-                    }
-                })
-                .attr("stroke", "white")
-                .on("mousemove", function(event, feature) {
-                    let region = feature.properties.ADM1_PT.toUpperCase();
-                    let regionData = dataMap.get(region);
-                    if (regionData) {
-                        var rate = +regionData.rate; // Assuming "value" is the property to display
-                        showTooltipMap(region, rate, event.offsetX, event.offsetY, getColor(rate, maxcolor, mincolor), "left");
-                    } else {
-                        console.warn("No data found for region:", region);
-                    }
-                })
-                .on("mouseout", function() {
-                    d3.select("#leftTooltipMap").style("display", "none");
+            //Update legend title
+            updateLegendTitle();
+
+            // Append a linear gradient element to the defs
+            let linearGradient = defs.append("linearGradient")
+                .attr("id", "linear-gradient")
+                .attr("x1", "0%")
+                .attr("y1", "0%")
+                .attr("x2", "0%")
+                .attr("y2", "100%"); // Gradient from top to bottom
+
+            // Set the stops for the gradient
+            for (let i = 0; i <= 100; i++) {
+                linearGradient.append("stop")
+                    .attr("offset", `${i}%`)
+                    .attr("stop-color", getColor(mincolor + ((100 - i) / 100) * (maxcolor - mincolor), maxcolor, mincolor));
+            }
+
+            // Create a rectangle and apply the gradient
+            svggrad.append("rect")
+                .attr("x", margin.left)
+                .attr("y", margin.top)
+                .attr("width", legendWidth)
+                .attr("height", legendHeight)
+                .style("fill", "url(#linear-gradient)");
+
+            // Create a scale for the y axis
+            let yScalegrad = d3.scaleLinear()
+                .domain([maxcolor, mincolor]) // Reversed domain
+                .range([margin.top, height_grad - margin.bottom]); // Ensure this range covers the correct height
+
+            // Add y axis
+            let yAxisgrad = d3.axisRight(yScalegrad)
+                .ticks(10)
+                .tickSizeOuter(0);
+
+            svggrad.append("g")
+                .attr("class", "y axis")
+                .attr("transform", `translate(${margin.left + legendWidth}, 0)`)
+                .call(yAxisgrad);
+
+                // Filter data by type "Observado"
+                let observed_data = data.filter(function(d) {
+                    return d.type === "Observado" && d.disease === disease_name;
                 });
 
-        }).catch(function(error) {
-            console.error("Error loading CSV:", error);
-        });
+                // Group observadoData by the "Region" column
+                let groupedData = d3.group(observed_data, d => d.Region);
 
-    }).catch(function(error) {
-        console.error("Error loading GeoJSON:", error);
-    });
+                // Create a map to store CSV data values by Region for "Observado" type and maximum date
+                let dataMap = new Map();
+
+                // For each group, filter to keep only the row with the highest date
+                Array.from(groupedData.entries()).forEach(function([region, regionData]) {
+                    let maxDateRow = regionData.reduce(function(maxDateRow, currentRow) {
+                        if (!maxDateRow || currentRow.date > maxDateRow.date) {
+                            return currentRow;
+                        } else {
+                            return maxDateRow;
+                        }
+                    }, null);
+
+                    //Get the data for the map
+                    dataMap.set(region, maxDateRow);
+
+                    // Replace the text content for subtitle
+                    let format = d3.timeFormat("%d-%b-%y");
+                    element.textContent = "Semana epidemiológica " + maxDateRow.epiweek + "/" + (maxDateRow.epiyear - 2000) + " (" + format(maxDateRow.date) + ")";
+                });
+
+                // Fit the GeoJSON data to the SVG size
+                projection.fitSize([width, height], mozambique);
+
+                // Append a group for the map features
+                let mapGroup = svg.append("g");
+
+                // Process GeoJSON features
+                mapGroup.selectAll("path")
+                    .data(mozambique.features)
+                    .enter()
+                    .append("path")
+                    .attr("d", path)
+                    .attr("fill", function(feature) {
+                        let region = feature.properties.ADM1_PT.toUpperCase();
+                        let regionData = dataMap.get(region);
+                        if (regionData) {
+                            let val = taxa ? +regionData.rate: +regionData.incident_cases;
+                            return getColor(val, maxcolor, mincolor); // Assume getColor() returns appropriate color based on value
+                        } else {
+                            console.warn("No data found for region:", region);
+                            return "black";
+                        }
+                    })
+                    .attr("stroke", "white")
+                    .on("mousemove", function(event, feature) {
+                        let region = feature.properties.ADM1_PT.toUpperCase();
+                        let regionData = dataMap.get(region);
+                        if (regionData) {
+                            let val = taxa ? +regionData.rate: +regionData.incident_cases;
+                            showTooltipMap(region, val, event.offsetX, event.offsetY, getColor(val, maxcolor, mincolor), "left", taxa);
+                        } else {
+                            console.warn("No data found for region:", region);
+                        }
+                    })
+                    .on("mouseout", function() {
+                        d3.select("#leftTooltipMap").style("display", "none");
+                    });
+
+            }).catch(function(error) {
+                console.error("Error loading CSV:", error);
+            });
+
+        }).catch(function(error) {
+            console.error("Error loading GeoJSON:", error);
+        });
 }
 
 // Function to show tooltip in region map
-function showTooltipMap(region, value, x, y, bgcolor, side) {
+function showTooltipMap(region, value, x, y, bgcolor, side, taxa) {
     
     // Round the value
-    let roundedValue = Math.round(value);
+    let roundedValue = value.toLocaleString(undefined, {maximumFractionDigits: 1});
     
     //Get object height
     let height = d3.select("#" + side + "MapCanvas").attr("height")
@@ -602,7 +623,7 @@ function showTooltipMap(region, value, x, y, bgcolor, side) {
     }
     
     // Update tooltip content with region in bold and rounded value
-    tooltip.html("<strong>" + region + "</strong>:<br>" + roundedValue + "/100 mil habitantes")
+    tooltip.html("<strong>" + region + "</strong>:<br>" + roundedValue + (taxa ? "/100 mil habitantes" : " casos"))
         .style("left", x + "px")
         .style("top", (y - 1.1*height) + "px")
         .style("background-color", bgcolor)
@@ -610,6 +631,9 @@ function showTooltipMap(region, value, x, y, bgcolor, side) {
 }
 
 function plotRegion(regionName){
+
+    //Decide whether its casos or taxa
+    let taxa =  document.getElementById('casosswitch').checked;
 
     let region_name = regionName.toUpperCase();
     let region_id;
@@ -637,7 +661,7 @@ function plotRegion(regionName){
     let disease_name = getActiveTabId();
     
     // Define the dimensions and margins for the plot
-    let margin = { top: 20, right: 30, bottom: 50, left: 40 };
+    let margin = { top: 20, right: 30, bottom: 50, left: 60 };
     
     // Change the width and height considering the margins
     let width  = +svg.attr("width") - margin.left - margin.right,
@@ -652,9 +676,9 @@ function plotRegion(regionName){
 
       data.forEach(function(d) {
         d.date     = new Date(d.date);
-        d.rate     = +d.incident_cases;
-        d.rate_low = +d.incident_cases_low; // Assuming these properties exist in your dataset
-        d.rate_up  = +d.incident_cases_upp;
+        d.val     = taxa ? +d.rate : +d.incident_cases;
+        d.val_low = taxa ? +d.rate_low : +d.incident_cases_low; // Assuming these properties exist in your dataset
+        d.val_up  = taxa ? +d.rate_up: +d.incident_cases_upp;
         d.epiweek  = +d.epiweek;
       });
       
@@ -667,7 +691,7 @@ function plotRegion(regionName){
         .range([0, width]);
 
       let yScale = d3.scaleLinear()
-        .domain([0, 1.1*d3.max(filteredData, d => d.rate_up)])
+        .domain([0, 1.1*d3.max(filteredData, d => d.val_up)])
         .range([height, 0]);
 
       // Define x and y axes
@@ -687,19 +711,19 @@ function plotRegion(regionName){
         })
         .tickSizeOuter(0);
 
-      let yAxis = d3.axisLeft(yScale)
-        .ticks(5)
-        .tickSizeOuter(0);
+        let yAxis = d3.axisLeft(yScale)
+            .ticks(5)
+            .tickSizeOuter(0);
 
-      // Append x axis to the plot
-      plot.append("g")
-          .attr("transform", `translate(0, ${height})`)
-          .call(xAxis);
+        // Append x axis to the plot
+        plot.append("g")
+            .attr("transform", `translate(0, ${height})`)
+            .call(xAxis);
 
 
-      // Append y axis to the plot
-      plot.append("g")
-          .call(yAxis);
+         // Append y axis to the plot
+        plot.append("g")
+            .call(yAxis);
 
 
         // Define a second x axis at the top
@@ -720,10 +744,20 @@ function plotRegion(regionName){
             .style("text-anchor", "middle")
             .text("Semana epidemiológica");
 
+        // Append label to the top axis
+        plot.append("text")
+            .attr("class", "axis-label")
+            .attr("transform", "rotate(-90)")
+            .attr("x", -height / 2) // Center the label on the y-axis
+            .attr("y", -margin.left/2 -margin.right/2) // Position the label outside the plot area
+            //.attr("dy", "1em") // Adjust vertical alignment
+            .style("text-anchor", "middle")
+            .text(taxa ? "Taxa por 100mil": "Casos");
+
       // Define line generator
       let line = d3.line()
           .x(d => xScale(d.date))
-          .y(d => yScale(d.rate));
+          .y(d => yScale(d.val));
 
       // Show confidence interval
       plot.append("path")
@@ -733,8 +767,8 @@ function plotRegion(regionName){
         .attr("stroke", "none")
         .attr("d", d3.area()
             .x(function(d) { return xScale(d.date); })
-            .y0(function(d) { return yScale(d.rate_low); })
-            .y1(function(d) { return yScale(d.rate_up); })
+            .y0(function(d) { return yScale(d.val_low); })
+            .y1(function(d) { return yScale(d.val_up); })
         );
 
       // Append path for the line chart
@@ -775,6 +809,7 @@ $( document ).ready(function(){
      // Initially set the active tab to the first one
      setActiveTab("malaria");
 
+     //Create the table
      getTable();
 
      //Create the initial map
@@ -823,5 +858,13 @@ $( document ).ready(function(){
     $(window).resize(function () { 
         plotRegions();
      });
+
+    //Add listener to switch
+    document.getElementById('casosswitch').addEventListener('change', function() {
+        updateLegendTitle();
+        updateDataMapPrevisto();
+        updateDataMapObservado();
+        plotRegions();
+    });
 });
 

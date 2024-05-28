@@ -94,9 +94,14 @@
             </li>            
         </ul>
         <ul class="navbar-nav ms-auto navbar-right">
-            <li class="nav-item ms-auto">
-                <a class="nav-link" href="Javascript:window.print();">PDF</a>
-            </li> 
+            <div class="mt-2">
+                <span class="nav-item" style="color: #ccc;"><i>Casos totales</i></span>
+                <label class="switch">
+                    <input type="checkbox" id="casosswitch" checked>
+                    <span class="slider round"></span>
+                </label>
+                <span class="nav-item" style="color: #ccc;"><i>Taxa por 100mil</i></span>
+            </div>            
         </ul>
     </div>
 </nav>    
@@ -105,8 +110,8 @@
         <div class="row">
             <div class="col-12">
                 <div class="card mt-5">
-                    <div class="card-body">
-                    <h2 class="lead mt-3" id="disease_title"></h2>
+                    <div class="card-header">
+                    <h2 class= "lead mt-3" id="disease_title"></h2>
                     </div>
                 </div>
             </div>
@@ -114,8 +119,8 @@
         <div class="row">
             <div class="col-12">
                 <div class="card mt-3">
-                    <div class="card-header">
-                    Incidência Acumulada [Total de casos previstos]
+                    <div class="card-header row row-cols-1 row-cols-md-2 row-cols-lg-2">
+                        <span class="lead">Incidência</span>                        
                     </div>
                     <div class="card-body">
                         <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 justify-content-center">
@@ -126,7 +131,7 @@
                             </div>
                             <div class="col mt-3" id="gradientcontainer" style="height: 500px;">
                                 <h5 id="legendatext">Legenda</h5>
-                                <h6 id="legendasubtitle">Taxa por 100 mil habitantes</h6>
+                                <h6 id="legendasubtitle"></h6>
                                 <svg id="gradientMap" width="400" height="400"></svg>
                             </div>
                             <div class="col mt-3" id="rightMapContainer" style="height: 500px;">
@@ -143,7 +148,7 @@
             <div class="col-12">
                 <div class="card mt-3">
                     <div class="card-header">
-                        <span>Semana:</span>
+                        <span class="lead">Semana:</span>
                     </div>
                     <div class="card-body" style="width: 100%;">
                         <div class="container" style="width: 100%;">    
@@ -159,7 +164,7 @@
             <div class="col-12">
                 <div class="card mt-3">
                     <div class="card-header">
-                        <h5 class="card-title" id="tabletitle"></h5>
+                        <h5 class="card-title lead" id="tabletitle"></h5>
                     </div>
                     <div class="card-body">                        
                         <div id="table"></div>
