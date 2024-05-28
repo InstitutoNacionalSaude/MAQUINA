@@ -7,16 +7,19 @@ function rateCiFormatter(cell, formatterParams, onRendered) {
     var rowData = cell.getRow().getData();
     
     // Concatenate epiweek and epiyear with a separator (e.g., "/")
-    return Math.round(rowData.Rate_Low).toLocaleString() + " a " + Math.round(rowData.Rate_Up).toLocaleString();
+    return rowData.Rate_Low.toLocaleString(undefined, {maximumFractionDigits:1}) + " a " + 
+        rowData.Rate_Up.toLocaleString(undefined, {maximumFractionDigits:1});
 }
 
 // Define a custom formatter to concatenate epiweek and epiyear
-function trendFormatter(cell, formatterParams, onRendered) {
+function arrowFormatter(cell, formatterParams, onRendered) {
     // Get the row data
     var rowData = cell.getRow().getData();
     
     // Concatenate epiweek and epiyear with a separator (e.g., "/")
-    return (rowData.Rate_Previsto/rowData.Rate_Observado - 1.0).toLocaleString(undefined,{style: 'percent', minimumFractionDigits:1});
+    let trend = Math.round(100.0*(rowData.Rate_Previsto/rowData.Rate_Observado - 1.0));
+
+    return Math.abs(trend) < 0.1 ? "≈" : (trend > 0.0 ? "↑" : "↓");
 }
 
 // Define a custom formatter to concatenate epiweek and epiyear
@@ -25,11 +28,11 @@ function casesCiFormatter(cell, formatterParams, onRendered) {
     var rowData = cell.getRow().getData();
     
     // Concatenate epiweek and epiyear with a separator (e.g., "/")
-    return Math.round(rowData.Cases_Low).toLocaleString() + " a " + Math.round(rowData.Cases_Up).toLocaleString();
+    return rowData.Cases_Low.toLocaleString(undefined, {maximumFractionDigits:1}) + " a " + 
+        rowData.Cases_Up.toLocaleString(undefined, {maximumFractionDigits:1});
 }
 
 //Loader for table
-// Function to load CSV data
 function loadCSVData(url, callback) {
     fetch(url)
         .then(response => response.text())
@@ -96,6 +99,17 @@ function loadCSVData(url, callback) {
                 let observadoRow = observadoMap.get(previstoRow.Region_Previsto);
                 return { ...previstoRow, ...observadoRow };
             });
+
+            // Calculate the trend values and add them to the data
+            mergedData.forEach(row => {
+                // Check if column2 is 0 to prevent division by zero
+                if (row.Rate_Observado === 0) {
+                    row.trend = "Undefined";
+                } else {
+                    row.trend = (row.Rate_Previsto / row.Rate_Observado - 1.0);
+                }
+            });
+
             callback(mergedData);
         });
 }
@@ -107,6 +121,8 @@ function getTable(){
 
         let nweeks = parseInt($('#weekSlider').val());
 
+        updateTableTitle(nweeks);
+
         updateTableFooter(data[0].Epiweek_Observado, data[0].Epiyear_Observado, data[0].Date_Observado,
                 data[0].Epiweek_Previsto, data[0].Epiyear_Previsto, data[0].Date_Previsto);
        
@@ -115,58 +131,64 @@ function getTable(){
             autoColumns: false, // Let us define columns
             columns: [                
                 { title: "Region", field: "Region_Previsto", sorter: "string", hozAlign: "right",frozen:true},
-                { title: "Tendência <br>(" + nweeks + (nweeks > 1 ? " semanas" : " semana") + ")", 
-                    field: "Cases_Observado", 
+                { title: "Tendência", 
+                    field: "trend", 
                     sorter: "number", 
-                    hozAlign: "left",
-                    formatter: trendFormatter
+                    hozAlign: "center",
+                    formatter: arrowFormatter
                 }, 
-                { title: "Observação semana<br>mais recente", 
-                    field: "Cases_Observado", 
+                { title: "Alteração<br>Percentual", 
+                    field: "trend", 
                     sorter: "number", 
-                    hozAlign: "left",
+                    hozAlign: "right",
                     formatter: function(cell) {
                         // Round the cases value and add commas
-                        return Math.round(cell.getValue()).toLocaleString();
+                        return cell.getValue().toLocaleString(undefined, {style: "percent", maximumFractionDigits:1});
                     }
                 }, 
-                { title: "Casos previstos<br>dentro de " +  nweeks + (nweeks > 1 ? " semanas" : " semana"), 
+                { title: "Observação<br>semana mais recente", 
+                    field: "Cases_Observado", 
+                    sorter: "number", 
+                    hozAlign: "right",
+                    formatter: function(cell) {
+                        // Round the cases value and add commas
+                        return cell.getValue().toLocaleString(undefined, {maximumFractionDigits:1});
+                    }
+                }, 
+                { title: "Casos previstos", 
                     field: "Cases_Previsto", 
                     sorter: "number", 
-                    hozAlign: "left",
+                    hozAlign: "right",
                     formatter: function(cell) {
-                        // Round the cases value and add commas
-                        return Math.round(cell.getValue()).toLocaleString();
+                        return cell.getValue().toLocaleString(undefined, {maximumFractionDigits:1});
                     }
                 }, 
-                { title: "Casos previstos<br>dentro de " +  nweeks +  (nweeks > 1 ? " semanas" : " semana") + "<br>(intervalo)", 
+                { title: "Casos previstos (intervalo)", 
                     field: "Rate_Low", 
                     sorter: "number", 
-                    hozAlign: "left",
+                    hozAlign: "right",
                     formatter: casesCiFormatter
                 },
                 { title: "Taxa observada<br>semana mais recente", 
                     field: "Rate_Observado", 
                     sorter: "number", 
-                    hozAlign: "left",
+                    hozAlign: "right",
                     formatter: function(cell) {
-                        // Round the cases value and add commas
-                        return Math.round(cell.getValue()).toLocaleString();
+                        return cell.getValue().toLocaleString(undefined, {maximumFractionDigits:1});
                     }
                 },
-                { title: "Taxa prevista<br>dentro de " +  nweeks + (nweeks > 1 ? " semanas" : " semana"), 
+                { title: "Taxa prevista", 
                     field: "Rate_Previsto", 
                     sorter: "number", 
-                    hozAlign: "left",
+                    hozAlign: "right",
                     formatter: function(cell) {
-                        // Round the cases value and add commas
-                        return Math.round(cell.getValue()).toLocaleString();
+                        return cell.getValue().toLocaleString(undefined, {maximumFractionDigits:1});
                     }
                 },
-                {title: "Taxa prevista<br>dentro de " +  nweeks + (nweeks > 1 ? " semanas" : " semana") + "<br>(intervalo)", 
+                {title: "Taxa prevista (intervalo)", 
                     field: "Rate_Low", 
                     sorter: "number", 
-                    hozAlign: "left",
+                    hozAlign: "right",
                     formatter: rateCiFormatter
                 },
             ],
@@ -176,8 +198,7 @@ function getTable(){
             movableColumns:true,      //allow column order to be changed
             columnHeaderVertAlign:"bottom", //align header contents to bottom of cell
             initialSort: [ // Specify the initial sort order
-                { column: "Region", dir: "asc" }, // Sort by date in ascending order by default
-                { column: "date", dir: "asc" }, // Sort by date in ascending order by default                
+                { column: "Region_Previsto", dir: "asc" }, // Sort by date in ascending order by default
             ]
         });
     });
@@ -226,6 +247,12 @@ function updatePrevistoTitle(kweek){
     // Select the element with id "semanaObservadoMapText"
     let element = document.querySelector("#previstoMapText");
     element.textContent = "Previsto dentro de " + kweek + (kweek > 1 ? " semanas" : " semana");
+}
+
+function updateTableTitle(kweek){
+    // Select the element with id "semanaObservadoMapText"
+    let element = document.querySelector("#tabletitle");
+    element.innerHTML = "Casos observados e previstos (dentro de " + kweek + (kweek > 1 ? " semanas" : " semana") + ")";
 }
 
 function updateTableFooter(epiweekobs, epiyearobs, dateobs, epiweekpred, epiyearpred, datepred){
