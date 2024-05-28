@@ -1,16 +1,16 @@
 // Define getColor function using Viridis color scale
 // open /Applications/Google\ Chrome.app --args --user-data-dir=.--disable-web-security
-function getColor(value) {
+function getColor(value, maxvalue, minvalue) {
     // Define Viridis color scale
-    var viridisScale = d3.scaleSequential()
+    let viridisScale = d3.scaleSequential()
         .domain([0, 1])  // Domain for the color scale
         .interpolator(d3.interpolateViridis);  // Interpolator function using Viridis colors
 
     // Normalize the value between 0 and 1 (assuming your value range is known)
-    var normalizedValue = (value - 0.0) / (1000.0 - 0.0);
+    let normalizedValue = (value - minvalue) / (maxvalue - minvalue);
 
     // Get color from the Viridis scale based on the normalized value
-    var color = viridisScale(normalizedValue);
+    let color = viridisScale(normalizedValue);
     return color;
 }
 
@@ -36,6 +36,92 @@ function diseaseName() {
     // Change the title of disease
     document.getElementById("disease_title").innerText = translatedName;
 }
+
+function updateGradientMap(){
+    
+    //Get the disease name 
+    let disease_name = getActiveTabId();
+    let colors = [ 'rgb(255,0,0)', 'rgb(255,255,0)' ];
+    //Change size
+    resizePlot("gradientMap");
+
+    // Select the SVG element
+    let svg = d3.select("#gradientMap");
+
+    // Remove any existing content from the SVG
+    svg.selectAll("*").remove();
+
+    // Define the dimensions and margins for the plot
+    let margin = { top: 20, right: 30, bottom: 50, left: 40 };
+    
+    // Change the width and height considering the margins
+    let width  = +svg.attr("width") - margin.left - margin.right,
+        height = +svg.attr("height") - margin.top - margin.bottom;
+
+    let legendWidth = width - margin.left - margin.right;
+    let legendHeight = height - margin.top - margin.bottom;
+
+    // Load GeoJSON data from file
+    d3.json("map/mozambique.geojson").then(function(mozambique) {
+        d3.csv("data/data.csv").then(function(data) {
+
+            let disease_data = data.filter(function(d) {
+                return d.disease === disease_name;
+            });
+
+            //Get max and minimum value for the colours
+            let maxcolor = d3.max(disease_data, d => +d.rate);
+            let mincolor = d3.min(disease_data, d => +d.rate);
+
+            // Define Viridis color scale
+            let viridisScale = d3.scaleSequential()
+                .domain([mincolor, maxcolor])
+                .interpolator(d3.interpolateViridis);
+
+            // Append a defs (definitions) element to hold the gradient definition
+            let defs = svg.append("defs");
+
+            // Append a linear gradient element to the defs
+            let linearGradient = defs.append("linearGradient")
+                .attr("id", "linear-gradient")
+                .attr("x1", "0%")
+                .attr("y1", "0%")
+                .attr("x2", "0%")
+                .attr("y2", "100%"); // Gradient from top to bottom
+
+            // Set the stops for the gradient
+            for (let i = 0; i <= 100; i++) {
+                linearGradient.append("stop")
+                    .attr("offset", `${i}%`)
+                    .attr("stop-color", getColor(mincolor + ((100 - i)/100)*(maxcolor - mincolor), maxcolor, mincolor));
+            }
+
+            // Create a rectangle and apply the gradient
+            svg.append("rect")
+                .attr("x", margin.left)
+                .attr("y", margin.top)
+                .attr("width", legendWidth)
+                .attr("height", legendHeight)
+                .style("fill", "url(#linear-gradient)");
+
+            // Create a scale for the y axis
+            let yScale = d3.scaleLinear()
+                .domain([maxcolor,mincolor])
+                .range([margin.top, height - margin.bottom]);
+
+            // Add y axis
+            let yAxis = d3.axisRight(yScale)
+                .ticks(10)
+                .tickSizeOuter(0);
+
+            svg.append("g")
+                .attr("class", "y axis")
+                .attr("transform", `translate(${margin.left + legendWidth}, 0)`)
+                .call(yAxis);
+        })
+    })
+}
+
 
 function updatePrevistoTitle(kweek){
     // Select the element with id "semanaObservadoMapText"
@@ -82,6 +168,14 @@ function updateDataMapPrevisto() {
             data.forEach(function(d) {
                 d.date = new Date(d.date);
             });
+
+            const disease_data = data.filter(function(d) {
+                return d.disease === disease_name;
+            });
+
+            //Get max and minimum value for the colours
+            let maxcolor = d3.max(disease_data, d => +d.rate);
+            let mincolor = d3.min(disease_data, d => +d.rate);
 
             // Filter data by type "Previsto"
             let previsto_data = data.filter(function(d) {
@@ -130,7 +224,7 @@ function updateDataMapPrevisto() {
                     const regionData = dataMap.get(region);
                     if (regionData) {
                         const rate = +regionData.rate; // Corrected line
-                        return getColor(rate); // Assume getColor() returns appropriate color based on value
+                        return getColor(rate, maxcolor, mincolor); // Assume getColor() returns appropriate color based on value
                     } else {
                         console.warn("No data found for region:", region);
                         return "black";
@@ -142,7 +236,7 @@ function updateDataMapPrevisto() {
                     const regionData = dataMap.get(region);
                     if (regionData) {
                         const rate = +regionData.rate; // Assuming "value" is the property to display
-                        showTooltipMap(region, rate, event.offsetX, event.offsetY, getColor(rate), "right");
+                        showTooltipMap(region, rate, event.offsetX, event.offsetY, getColor(rate, maxcolor, mincolor), "right");
                     } else {
                         console.warn("No data found for region:", region);
                     }
@@ -197,6 +291,14 @@ function updateDataMapObservado() {
                 d.date = new Date(d.date);
             });
 
+            const disease_data = data.filter(function(d) {
+                return d.disease === disease_name;
+            });
+
+            //Get max and minimum value for the colours
+            let maxcolor = d3.max(disease_data, d => +d.rate);
+            let mincolor = d3.min(disease_data, d => +d.rate);
+
             // Filter data by type "Observado"
             const observed_data = data.filter(function(d) {
                 return d.type === "Observado" && d.disease === disease_name;
@@ -243,7 +345,7 @@ function updateDataMapObservado() {
                     var regionData = dataMap.get(region);
                     if (regionData) {
                         var rate = +regionData.rate;
-                        return getColor(rate); // Assume getColor() returns appropriate color based on value
+                        return getColor(rate, maxcolor, mincolor); // Assume getColor() returns appropriate color based on value
                     } else {
                         console.warn("No data found for region:", region);
                         return "black";
@@ -255,7 +357,7 @@ function updateDataMapObservado() {
                     var regionData = dataMap.get(region);
                     if (regionData) {
                         var rate = +regionData.rate; // Assuming "value" is the property to display
-                        showTooltipMap(region, rate, event.offsetX, event.offsetY, getColor(rate), "left");
+                        showTooltipMap(region, rate, event.offsetX, event.offsetY, getColor(rate, maxcolor, mincolor), "left");
                     } else {
                         console.warn("No data found for region:", region);
                     }
@@ -336,7 +438,7 @@ function plotRegion(regionName){
     
     // Change the width and height considering the margins
     let width  = +svg.attr("width") - margin.left - margin.right,
-          height = +svg.attr("height") - margin.top - margin.bottom;
+        height = +svg.attr("height") - margin.top - margin.bottom;
 
     // Append SVG to the body
     let plot = svg.append("g")
@@ -362,7 +464,7 @@ function plotRegion(regionName){
         .range([0, width]);
 
       let yScale = d3.scaleLinear()
-        .domain([0, 1.1*Math.max(d3.max(filteredData, d => d.rate_up), d3.max(filteredData, d => d.rate_up))])
+        .domain([0, 1.1*d3.max(filteredData, d => d.rate_up)])
         .range([height, 0]);
 
       // Define x and y axes
@@ -473,6 +575,9 @@ $( document ).ready(function(){
      //Create the initial map
      updateDataMapObservado();
 
+     //Create the initial map
+     updateGradientMap();
+
      //Get the initial disease name
      diseaseName();
 
@@ -498,6 +603,7 @@ $( document ).ready(function(){
     $('a[href="#malaria"]').click(function(){
         updateDataMapPrevisto(); 
         updateDataMapObservado();
+        updateGradientMap();
         diseaseName();
         plotRegions();
     }); 
@@ -505,6 +611,7 @@ $( document ).ready(function(){
     $('a[href="#diarrhea"]').click(function(){
         updateDataMapPrevisto();
         updateDataMapObservado();
+        updateGradientMap();
         diseaseName();
         plotRegions();
     }); 
