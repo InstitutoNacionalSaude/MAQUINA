@@ -68,6 +68,13 @@
     <link rel="stylesheet" href="css/rSlider.min.css">
     <script src="src/rSlider.min.js"></script>
 
+    <!-- Tables -->
+    <link rel="stylesheet" href="css/tabulator_bootstrap5.min.css">
+    <script type="text/javascript" src="src/tabulator.min.js"></script>
+    <script src="src/papaparse.min.js"></script>
+    <script src="src/luxon.min.js"></script>
+    <script src="src/moment-with-locales.js"></script>
+
 </head>
 
 <body>
@@ -119,7 +126,7 @@
                             </div>
                             <div class="col mt-3" id="gradientcontainer" style="height: 500px;">
                                 <h5 id="legendatext">Legenda</h5>
-                                <h6 id="legendasubtitle">Casos/100 mil habitantes</h6>
+                                <h6 id="legendasubtitle">Taxa por 100 mil habitantes</h6>
                                 <svg id="gradientMap" width="400" height="400"></svg>
                             </div>
                             <div class="col mt-3" id="rightMapContainer" style="height: 500px;">
@@ -153,7 +160,7 @@
                 <div class="card mt-3">
                     <div class="card-body">
                         <h5 class="card-title">Table Section</h5>
-                        <table class="table" id="dataTable">
+                        <div id="table"></div>
                         </table>
                     </div>
                 </div>
@@ -285,5 +292,70 @@
         </div>
     </footer>
 </div>
+<script>
+    var DateTime = luxon.DateTime;
+    
+    // Function to load CSV data
+    function loadCSVData(url, callback) {
+        fetch(url)
+            .then(response => response.text())
+            .then(data => {
+                let parsedData = Papa.parse(data, {
+                    header: true,
+                    dynamicTyping: true,
+                    skipEmptyLines: true
+                }).data;
+
+                // Get the disease 
+                let disease_name = getActiveTabId();
+
+                // Filter data based on disease_name
+                let filteredData = parsedData.filter(row => row.disease === disease_name);
+
+                // Parse date values as JavaScript Date objects
+                filteredData.forEach(row => {
+                        row.date = DateTime.fromISO(row.date);
+                });
+
+                callback(filteredData);
+            });
+    }
+
+    // Load data and create the Tabulator table
+    loadCSVData("data/data.csv", function(data) {
+       
+        let table = new Tabulator("#table", {
+            data: data,
+            autoColumns: false, // Let us define columns
+            columns: [                
+                { title: "Region", field: "Region", sorter: "string", hozAlign: "right" },
+                { title: "Epiweek", field: "epiweek", sorter: "number", hozAlign: "left" },
+                { title: "Epiyear", field: "epiyear", sorter: "number", hozAlign: "left" },
+                { title: "Date", field: "date", sorter: "datetime", hozAlign: "left", 
+                    formatter: "datetime", // Use a datetime formatter for displaying dates
+                    formatterParams: {
+                        outputFormat: "DD", // Specify the desired output format of the date
+                        invalidPlaceholder: "", // Optional: Specify a placeholder for invalid dates
+                    }},
+                { title: "Rate", 
+                    field: "rate", 
+                    sorter: "number", 
+                    hozAlign: "left",
+                    formatter: function(cell) {
+                            // Round the cases value and add commas
+                            return Math.round(cell.getValue()).toLocaleString();
+                    }
+                },
+            ],
+            layout: "fitColumns", // Fit columns to width of table
+            pagination: "local",
+            paginationSize: 11,
+            initialSort: [ // Specify the initial sort order
+                { column: "Region", dir: "asc" }, // Sort by date in ascending order by default
+                { column: "date", dir: "asc" }, // Sort by date in ascending order by default                
+            ]
+        });
+    });
+</script>
 </body>
 </html>
