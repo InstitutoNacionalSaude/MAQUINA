@@ -2,21 +2,21 @@
 var DateTime = luxon.DateTime;
 
 // Define a custom formatter to concatenate epiweek and epiyear
-function epiDateFormatter(cell, formatterParams, onRendered) {
-    // Get the row data
-    var rowData = cell.getRow().getData();
-    
-    // Concatenate epiweek and epiyear with a separator (e.g., "/")
-    return rowData.Epiweek_Observado + "/" + (rowData.Epiyear_Observado - 2000);
-}
-
-// Define a custom formatter to concatenate epiweek and epiyear
 function rateCiFormatter(cell, formatterParams, onRendered) {
     // Get the row data
     var rowData = cell.getRow().getData();
     
     // Concatenate epiweek and epiyear with a separator (e.g., "/")
     return Math.round(rowData.Rate_Low).toLocaleString() + " a " + Math.round(rowData.Rate_Up).toLocaleString();
+}
+
+// Define a custom formatter to concatenate epiweek and epiyear
+function trendFormatter(cell, formatterParams, onRendered) {
+    // Get the row data
+    var rowData = cell.getRow().getData();
+    
+    // Concatenate epiweek and epiyear with a separator (e.g., "/")
+    return (rowData.Rate_Previsto/rowData.Rate_Observado - 1.0).toLocaleString(undefined,{style: 'percent', minimumFractionDigits:1});
 }
 
 // Define a custom formatter to concatenate epiweek and epiyear
@@ -42,10 +42,11 @@ function loadCSVData(url, callback) {
 
             // Get the disease 
             let disease_name = getActiveTabId();
+            let nweeks = parseInt($('#weekSlider').val());
 
             // Parse date values as JavaScript Date objects
             parsedData.forEach(row => {
-                    row.date = DateTime.fromISO(row.date);
+                row.date = DateTime.fromISO(row.date);
             });                
 
             // Filter data based on disease_name
@@ -54,11 +55,11 @@ function loadCSVData(url, callback) {
 
              // Find the maximum date
             let maxObservado = observado_data.reduce((max, row) => (row.date > max ? row.date : max), observado_data[0].date);
-            let maxPrevisto  = previsto_data.reduce((max, row) => (row.date > max ? row.date : max), previsto_data[0].date);
+            let minPrevisto  = previsto_data.reduce((min, row) => (row.date < min ? row.date : min), previsto_data[0].date).plus({ days: 7*(nweeks - 1) });
 
             // Keep only rows with the maximum date
             observado_data = observado_data.filter(row => row.date.equals(maxObservado));
-            previsto_data = previsto_data.filter(row => row.date.equals(maxPrevisto));
+            previsto_data  = previsto_data.filter(row => row.date.equals(minPrevisto));
 
             // Rename columns of observado_data
             observado_data = observado_data.map(row => ({
@@ -95,32 +96,31 @@ function loadCSVData(url, callback) {
                 let observadoRow = observadoMap.get(previstoRow.Region_Previsto);
                 return { ...previstoRow, ...observadoRow };
             });
-
-            console.log(mergedData)
-
             callback(mergedData);
         });
 }
 
 function getTable(){
-
+    
     // Load data and create the Tabulator table
     loadCSVData("data/data.csv", function(data) {
+
+        let nweeks = parseInt($('#weekSlider').val());
+
+        updateTableFooter(data[0].Epiweek_Observado, data[0].Epiyear_Observado, data[0].Date_Observado,
+                data[0].Epiweek_Previsto, data[0].Epiyear_Previsto, data[0].Date_Previsto);
        
         let table = new Tabulator("#table", {
             data: data,
             autoColumns: false, // Let us define columns
             columns: [                
                 { title: "Region", field: "Region_Previsto", sorter: "string", hozAlign: "right",frozen:true},
-                { title: "Epiweek", field: "epiweek", sorter: "alphanum", hozAlign: "left",
-                    formatter: epiDateFormatter
-                },
-                { title: "Date", field: "Date_Observado", sorter: "datetime", hozAlign: "left", 
-                    formatter: "datetime", // Use a datetime formatter for displaying dates
-                    formatterParams: {
-                        outputFormat: "DD", // Specify the desired output format of the date
-                        invalidPlaceholder: "", // Optional: Specify a placeholder for invalid dates
-                    }},
+                { title: "Tendência <br>(" + nweeks + (nweeks > 1 ? " semanas" : " semana") + ")", 
+                    field: "Cases_Observado", 
+                    sorter: "number", 
+                    hozAlign: "left",
+                    formatter: trendFormatter
+                }, 
                 { title: "Observação semana<br>mais recente", 
                     field: "Cases_Observado", 
                     sorter: "number", 
@@ -130,7 +130,7 @@ function getTable(){
                         return Math.round(cell.getValue()).toLocaleString();
                     }
                 }, 
-                { title: "Casos previstos<br>dentro de 2 semanas", 
+                { title: "Casos previstos<br>dentro de " +  nweeks + (nweeks > 1 ? " semanas" : " semana"), 
                     field: "Cases_Previsto", 
                     sorter: "number", 
                     hozAlign: "left",
@@ -139,7 +139,7 @@ function getTable(){
                         return Math.round(cell.getValue()).toLocaleString();
                     }
                 }, 
-                { title: "Casos previstos<br>dentro de 2 semanas<br>(intervalo)", 
+                { title: "Casos previstos<br>dentro de " +  nweeks +  (nweeks > 1 ? " semanas" : " semana") + "<br>(intervalo)", 
                     field: "Rate_Low", 
                     sorter: "number", 
                     hozAlign: "left",
@@ -154,7 +154,7 @@ function getTable(){
                         return Math.round(cell.getValue()).toLocaleString();
                     }
                 },
-                { title: "Taxa prevista<br>dentro de 2 semanas", 
+                { title: "Taxa prevista<br>dentro de " +  nweeks + (nweeks > 1 ? " semanas" : " semana"), 
                     field: "Rate_Previsto", 
                     sorter: "number", 
                     hozAlign: "left",
@@ -163,7 +163,7 @@ function getTable(){
                         return Math.round(cell.getValue()).toLocaleString();
                     }
                 },
-                { title: "Taxa prevista<br>dentro de 2 semanas<br>(intervalo)", 
+                {title: "Taxa prevista<br>dentro de " +  nweeks + (nweeks > 1 ? " semanas" : " semana") + "<br>(intervalo)", 
                     field: "Rate_Low", 
                     sorter: "number", 
                     hozAlign: "left",
@@ -173,6 +173,7 @@ function getTable(){
             layout: "fitDataFill", // Fit columns to width of table
             pagination: false,
             paginationSize: 11,
+            movableColumns:true,      //allow column order to be changed
             columnHeaderVertAlign:"bottom", //align header contents to bottom of cell
             initialSort: [ // Specify the initial sort order
                 { column: "Region", dir: "asc" }, // Sort by date in ascending order by default
@@ -225,6 +226,21 @@ function updatePrevistoTitle(kweek){
     // Select the element with id "semanaObservadoMapText"
     let element = document.querySelector("#previstoMapText");
     element.textContent = "Previsto dentro de " + kweek + (kweek > 1 ? " semanas" : " semana");
+}
+
+function updateTableFooter(epiweekobs, epiyearobs, dateobs, epiweekpred, epiyearpred, datepred){
+
+    const options = {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      };
+
+    // Select the element with id "dateobs"
+    let element = document.querySelector("#dateobs");
+    element.innerHTML = "<b>Semana observada:</b> " + epiweekobs + "/" + (epiyearobs - 2000) + " [" +
+        dateobs.toLocaleString(options) + "]" + " | <b>Semana prevista:</b> " + epiweekpred + "/" + 
+        (epiyearpred - 2000) + " [" + datepred.toLocaleString(options) + "]";
 }
 
 function updateDataMapPrevisto() {
@@ -752,6 +768,7 @@ $( document ).ready(function(){
         set: [1],
         onChange: function (vals) {
             updateDataMapPrevisto();
+            getTable();
         }
     });
 
