@@ -1,3 +1,187 @@
+//Create Datetime function shorthand
+var DateTime = luxon.DateTime;
+
+// Define a custom formatter to concatenate epiweek and epiyear
+function epiDateFormatter(cell, formatterParams, onRendered) {
+    // Get the row data
+    var rowData = cell.getRow().getData();
+    
+    // Concatenate epiweek and epiyear with a separator (e.g., "/")
+    return rowData.Epiweek_Observado + "/" + (rowData.Epiyear_Observado - 2000);
+}
+
+// Define a custom formatter to concatenate epiweek and epiyear
+function rateCiFormatter(cell, formatterParams, onRendered) {
+    // Get the row data
+    var rowData = cell.getRow().getData();
+    
+    // Concatenate epiweek and epiyear with a separator (e.g., "/")
+    return Math.round(rowData.Rate_Low).toLocaleString() + " a " + Math.round(rowData.Rate_Up).toLocaleString();
+}
+
+// Define a custom formatter to concatenate epiweek and epiyear
+function casesCiFormatter(cell, formatterParams, onRendered) {
+    // Get the row data
+    var rowData = cell.getRow().getData();
+    
+    // Concatenate epiweek and epiyear with a separator (e.g., "/")
+    return Math.round(rowData.Cases_Low).toLocaleString() + " a " + Math.round(rowData.Cases_Up).toLocaleString();
+}
+
+//Loader for table
+// Function to load CSV data
+function loadCSVData(url, callback) {
+    fetch(url)
+        .then(response => response.text())
+        .then(data => {
+            let parsedData = Papa.parse(data, {
+                header: true,
+                dynamicTyping: true,
+                skipEmptyLines: true
+            }).data;
+
+            // Get the disease 
+            let disease_name = getActiveTabId();
+
+            // Parse date values as JavaScript Date objects
+            parsedData.forEach(row => {
+                    row.date = DateTime.fromISO(row.date);
+            });                
+
+            // Filter data based on disease_name
+            let previsto_data = parsedData.filter(row => row.disease === disease_name && row.type === "Previsto");
+            let observado_data = parsedData.filter(row => row.disease === disease_name && row.type === "Observado");
+
+             // Find the maximum date
+            let maxObservado = observado_data.reduce((max, row) => (row.date > max ? row.date : max), observado_data[0].date);
+            let maxPrevisto  = previsto_data.reduce((max, row) => (row.date > max ? row.date : max), previsto_data[0].date);
+
+            // Keep only rows with the maximum date
+            observado_data = observado_data.filter(row => row.date.equals(maxObservado));
+            previsto_data = previsto_data.filter(row => row.date.equals(maxPrevisto));
+
+            // Rename columns of observado_data
+            observado_data = observado_data.map(row => ({
+                Region_Observado: row.Region,
+                Rate_Observado: row.rate,
+                Cases_Observado: row.incident_cases,
+                Epiweek_Observado: row.epiweek,
+                Epiyear_Observado: row.epiyear,
+                Date_Observado: row.date,
+            }));
+
+            // Rename columns of previsto_data
+            previsto_data = previsto_data.map(row => ({
+                Region_Previsto: row.Region,
+                Rate_Previsto: row.rate,
+                Rate_Low: row.rate_low,
+                Rate_Up: row.rate_up,
+                Cases_Previsto: row.incident_cases,
+                Cases_Low: row.incident_cases_low,
+                Cases_Up: row.incident_cases_upp,
+                Epiweek_Previsto: row.epiweek,
+                Epiyear_Previsto: row.epiyear,
+                Date_Previsto: row.date,
+            }));
+            
+            // Create a map of observado_data by Region
+            let observadoMap = new Map();
+            observado_data.forEach(row => {
+                observadoMap.set(row.Region_Observado, row);
+            });
+
+            // Merge observado_data and previsto_data based on Region
+            let mergedData = previsto_data.map(previstoRow => {
+                let observadoRow = observadoMap.get(previstoRow.Region_Previsto);
+                return { ...previstoRow, ...observadoRow };
+            });
+
+            console.log(mergedData)
+
+            callback(mergedData);
+        });
+}
+
+function getTable(){
+
+    // Load data and create the Tabulator table
+    loadCSVData("data/data.csv", function(data) {
+       
+        let table = new Tabulator("#table", {
+            data: data,
+            autoColumns: false, // Let us define columns
+            columns: [                
+                { title: "Region", field: "Region_Previsto", sorter: "string", hozAlign: "right",frozen:true},
+                { title: "Epiweek", field: "epiweek", sorter: "alphanum", hozAlign: "left",
+                    formatter: epiDateFormatter
+                },
+                { title: "Date", field: "Date_Observado", sorter: "datetime", hozAlign: "left", 
+                    formatter: "datetime", // Use a datetime formatter for displaying dates
+                    formatterParams: {
+                        outputFormat: "DD", // Specify the desired output format of the date
+                        invalidPlaceholder: "", // Optional: Specify a placeholder for invalid dates
+                    }},
+                { title: "Observação semana<br>mais recente", 
+                    field: "Cases_Observado", 
+                    sorter: "number", 
+                    hozAlign: "left",
+                    formatter: function(cell) {
+                        // Round the cases value and add commas
+                        return Math.round(cell.getValue()).toLocaleString();
+                    }
+                }, 
+                { title: "Casos previstos<br>dentro de 2 semanas", 
+                    field: "Cases_Previsto", 
+                    sorter: "number", 
+                    hozAlign: "left",
+                    formatter: function(cell) {
+                        // Round the cases value and add commas
+                        return Math.round(cell.getValue()).toLocaleString();
+                    }
+                }, 
+                { title: "Casos previstos<br>dentro de 2 semanas<br>(intervalo)", 
+                    field: "Rate_Low", 
+                    sorter: "number", 
+                    hozAlign: "left",
+                    formatter: casesCiFormatter
+                },
+                { title: "Taxa observada<br>semana mais recente", 
+                    field: "Rate_Observado", 
+                    sorter: "number", 
+                    hozAlign: "left",
+                    formatter: function(cell) {
+                        // Round the cases value and add commas
+                        return Math.round(cell.getValue()).toLocaleString();
+                    }
+                },
+                { title: "Taxa prevista<br>dentro de 2 semanas", 
+                    field: "Rate_Previsto", 
+                    sorter: "number", 
+                    hozAlign: "left",
+                    formatter: function(cell) {
+                        // Round the cases value and add commas
+                        return Math.round(cell.getValue()).toLocaleString();
+                    }
+                },
+                { title: "Taxa prevista<br>dentro de 2 semanas<br>(intervalo)", 
+                    field: "Rate_Low", 
+                    sorter: "number", 
+                    hozAlign: "left",
+                    formatter: rateCiFormatter
+                },
+            ],
+            layout: "fitDataFill", // Fit columns to width of table
+            pagination: false,
+            paginationSize: 11,
+            columnHeaderVertAlign:"bottom", //align header contents to bottom of cell
+            initialSort: [ // Specify the initial sort order
+                { column: "Region", dir: "asc" }, // Sort by date in ascending order by default
+                { column: "date", dir: "asc" }, // Sort by date in ascending order by default                
+            ]
+        });
+    });
+}
+
 // Define getColor function using Viridis color scale
 // open /Applications/Google\ Chrome.app --args --user-data-dir=.--disable-web-security
 function getColor(value, maxvalue, minvalue) {
@@ -548,9 +732,10 @@ $( document ).ready(function(){
      // Initially set the active tab to the first one
      setActiveTab("malaria");
 
+     getTable();
+
      //Create the initial map
      updateDataMapObservado();
-
 
      //Get the initial disease name
      diseaseName();
@@ -578,6 +763,7 @@ $( document ).ready(function(){
         updateDataMapPrevisto(); 
         updateDataMapObservado();
         diseaseName();
+        getTable();
         plotRegions();
     }); 
 
@@ -585,6 +771,7 @@ $( document ).ready(function(){
         updateDataMapPrevisto();
         updateDataMapObservado();
         diseaseName();
+        getTable();
         plotRegions();
     }); 
 
