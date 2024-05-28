@@ -206,7 +206,7 @@ let svggrad = d3.select("#gradientMap");
 svggrad.selectAll("*").remove();
 
 // Define the dimensions and margins for the plot
-let margin = { top: 30, right: 100, bottom: 10, left: 150 };
+let margin = { top: 50, right: 100, bottom: 30, left: 150 };
 
 // Get the width and height from the SVG element
 let width_grad  = +svggrad.attr("width"),
