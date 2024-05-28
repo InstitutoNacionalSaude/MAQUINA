@@ -37,92 +37,6 @@ function diseaseName() {
     document.getElementById("disease_title").innerText = translatedName;
 }
 
-function updateGradientMap(){
-    
-    //Get the disease name 
-    let disease_name = getActiveTabId();
-    let colors = [ 'rgb(255,0,0)', 'rgb(255,255,0)' ];
-    //Change size
-    resizePlot("gradientMap");
-
-    // Select the SVG element
-    let svg = d3.select("#gradientMap");
-
-    // Remove any existing content from the SVG
-    svg.selectAll("*").remove();
-
-    // Define the dimensions and margins for the plot
-    let margin = { top: 20, right: 30, bottom: 50, left: 40 };
-    
-    // Change the width and height considering the margins
-    let width  = +svg.attr("width") - margin.left - margin.right,
-        height = +svg.attr("height") - margin.top - margin.bottom;
-
-    let legendWidth = width - margin.left - margin.right;
-    let legendHeight = height - margin.top - margin.bottom;
-
-    // Load GeoJSON data from file
-    d3.json("map/mozambique.geojson").then(function(mozambique) {
-        d3.csv("data/data.csv").then(function(data) {
-
-            let disease_data = data.filter(function(d) {
-                return d.disease === disease_name;
-            });
-
-            //Get max and minimum value for the colours
-            let maxcolor = d3.max(disease_data, d => +d.rate);
-            let mincolor = d3.min(disease_data, d => +d.rate);
-
-            // Define Viridis color scale
-            let viridisScale = d3.scaleSequential()
-                .domain([mincolor, maxcolor])
-                .interpolator(d3.interpolateViridis);
-
-            // Append a defs (definitions) element to hold the gradient definition
-            let defs = svg.append("defs");
-
-            // Append a linear gradient element to the defs
-            let linearGradient = defs.append("linearGradient")
-                .attr("id", "linear-gradient")
-                .attr("x1", "0%")
-                .attr("y1", "0%")
-                .attr("x2", "0%")
-                .attr("y2", "100%"); // Gradient from top to bottom
-
-            // Set the stops for the gradient
-            for (let i = 0; i <= 100; i++) {
-                linearGradient.append("stop")
-                    .attr("offset", `${i}%`)
-                    .attr("stop-color", getColor(mincolor + ((100 - i)/100)*(maxcolor - mincolor), maxcolor, mincolor));
-            }
-
-            // Create a rectangle and apply the gradient
-            svg.append("rect")
-                .attr("x", margin.left)
-                .attr("y", margin.top)
-                .attr("width", legendWidth)
-                .attr("height", legendHeight)
-                .style("fill", "url(#linear-gradient)");
-
-            // Create a scale for the y axis
-            let yScale = d3.scaleLinear()
-                .domain([maxcolor,mincolor])
-                .range([margin.top, height - margin.bottom]);
-
-            // Add y axis
-            let yAxis = d3.axisRight(yScale)
-                .ticks(10)
-                .tickSizeOuter(0);
-
-            svg.append("g")
-                .attr("class", "y axis")
-                .attr("transform", `translate(${margin.left + legendWidth}, 0)`)
-                .call(yAxis);
-        })
-    })
-}
-
-
 function updatePrevistoTitle(kweek){
     // Select the element with id "semanaObservadoMapText"
     let element = document.querySelector("#previstoMapText");
@@ -195,14 +109,14 @@ function updateDataMapPrevisto() {
             
             // For each group, filter to keep only the row with the nth minimal date
             Array.from(groupedData.entries()).forEach(function([region, regionData]) {
-                const sortedDates = regionData.map(function(d) { return d.date; }).sort(function(a, b) { return a - b; }); // Sort dates in ascending order
+                let sortedDates = regionData.map(function(d) { return d.date; }).sort(function(a, b) { return a - b; }); // Sort dates in ascending order
                 if (sortedDates.length >= nweeks) {
-                    const nthMinDate = sortedDates[nweeks - 1]; // Retrieve the nth minimal date
-                    const nthMinDateRow = regionData.find(function(d) { return d.date.getTime() === nthMinDate.getTime(); }); // Find the row with the nth minimal date
+                    let nthMinDate = sortedDates[nweeks - 1]; // Retrieve the nth minimal date
+                    let nthMinDateRow = regionData.find(function(d) { return d.date.getTime() === nthMinDate.getTime(); }); // Find the row with the nth minimal date
                     dataMap.set(region, nthMinDateRow); // Store the row in the dataMap with the respective region key
 
                     // Replace the text content for subtitle
-                    const format = d3.timeFormat("%d-%b-%y");
+                    let format = d3.timeFormat("%d-%b-%y");
                     element.textContent = "Semana epidemiológica " + nthMinDateRow.epiweek + "/" + (nthMinDateRow.epiyear - 2000) + " (" + format(nthMinDateRow.date) + ")";
 
                 } else {
@@ -211,7 +125,7 @@ function updateDataMapPrevisto() {
             });
 
             // Append a group for the map features
-            const mapGroup = svg.append("g");
+            let mapGroup = svg.append("g");
 
             // Process GeoJSON features
             mapGroup.selectAll("path")
@@ -220,10 +134,10 @@ function updateDataMapPrevisto() {
                 .append("path")
                 .attr("d", path)
                 .attr("fill", function(feature) {
-                    const region = feature.properties.ADM1_PT.toUpperCase();
-                    const regionData = dataMap.get(region);
+                    let region = feature.properties.ADM1_PT.toUpperCase();
+                    let regionData = dataMap.get(region);
                     if (regionData) {
-                        const rate = +regionData.rate; // Corrected line
+                        let rate = +regionData.rate; // Corrected line
                         return getColor(rate, maxcolor, mincolor); // Assume getColor() returns appropriate color based on value
                     } else {
                         console.warn("No data found for region:", region);
@@ -232,10 +146,10 @@ function updateDataMapPrevisto() {
                 })
                 .attr("stroke", "white")
                 .on("mousemove", function(event, feature) {
-                    const region = feature.properties.ADM1_PT.toUpperCase();
-                    const regionData = dataMap.get(region);
+                    let region = feature.properties.ADM1_PT.toUpperCase();
+                    let regionData = dataMap.get(region);
                     if (regionData) {
-                        const rate = +regionData.rate; // Assuming "value" is the property to display
+                        let rate = +regionData.rate; // Assuming "value" is the property to display
                         showTooltipMap(region, rate, event.offsetX, event.offsetY, getColor(rate, maxcolor, mincolor), "right");
                     } else {
                         console.warn("No data found for region:", region);
@@ -267,8 +181,8 @@ function updateDataMapObservado() {
 
     // Select the SVG element
     let svg = d3.select("#leftMapCanvas"),
-          width  = +svg.attr("width"),
-          height = +svg.attr("height");
+        width  = +svg.attr("width"),
+        height = +svg.attr("height");
 
     // Remove any existing content from the SVG
     svg.selectAll("*").remove();
@@ -282,37 +196,99 @@ function updateDataMapObservado() {
     let path = d3.geoPath()
                   .projection(projection);
 
-    // Load GeoJSON data from file
-    d3.json("map/mozambique.geojson").then(function(mozambique) {
-        d3.csv("data/data.csv").then(function(data) {
+     // Change size
+resizePlot("gradientMap");
 
-            // Convert "date" column to Date objects
-            data.forEach(function(d) {
-                d.date = new Date(d.date);
-            });
+// Select the SVG element
+let svggrad = d3.select("#gradientMap");
 
-            const disease_data = data.filter(function(d) {
-                return d.disease === disease_name;
-            });
+// Remove any existing content from the SVG
+svggrad.selectAll("*").remove();
 
-            //Get max and minimum value for the colours
-            let maxcolor = d3.max(disease_data, d => +d.rate);
-            let mincolor = d3.min(disease_data, d => +d.rate);
+// Define the dimensions and margins for the plot
+let margin = { top: 30, right: 100, bottom: 10, left: 150 };
+
+// Get the width and height from the SVG element
+let width_grad  = +svggrad.attr("width"),
+    height_grad = +svggrad.attr("height");
+
+// Calculate the inner width and height considering the margins
+let legendWidth = width_grad - margin.left - margin.right,
+    legendHeight = height_grad - margin.top - margin.bottom;              
+
+// Load GeoJSON data from file
+d3.json("map/mozambique.geojson").then(function(mozambique) {
+    d3.csv("data/data.csv").then(function(data) {
+
+        // Convert "date" column to Date objects
+        data.forEach(function(d) {
+            d.date = new Date(d.date);
+        });
+
+        let disease_data = data.filter(function(d) {
+            return d.disease === disease_name;
+        });
+
+        // Get max and minimum value for the colours
+        let maxcolor = d3.max(disease_data, d => +d.rate),
+            mincolor = d3.min(disease_data, d => +d.rate);
+
+        // Create the gradient
+        // Append a defs (definitions) element to hold the gradient definition
+        let defs = svggrad.append("defs");
+
+        // Append a linear gradient element to the defs
+        let linearGradient = defs.append("linearGradient")
+            .attr("id", "linear-gradient")
+            .attr("x1", "0%")
+            .attr("y1", "0%")
+            .attr("x2", "0%")
+            .attr("y2", "100%"); // Gradient from top to bottom
+
+        // Set the stops for the gradient
+        for (let i = 0; i <= 100; i++) {
+            linearGradient.append("stop")
+                .attr("offset", `${i}%`)
+                .attr("stop-color", getColor(mincolor + ((100 - i) / 100) * (maxcolor - mincolor), maxcolor, mincolor));
+        }
+
+        // Create a rectangle and apply the gradient
+        svggrad.append("rect")
+            .attr("x", margin.left)
+            .attr("y", margin.top)
+            .attr("width", legendWidth)
+            .attr("height", legendHeight)
+            .style("fill", "url(#linear-gradient)");
+
+        // Create a scale for the y axis
+        let yScalegrad = d3.scaleLinear()
+            .domain([maxcolor, mincolor]) // Reversed domain
+            .range([margin.top, height_grad - margin.bottom]); // Ensure this range covers the correct height
+
+        // Add y axis
+        let yAxisgrad = d3.axisRight(yScalegrad)
+            .ticks(10)
+            .tickSizeOuter(0);
+
+        svggrad.append("g")
+            .attr("class", "y axis")
+            .attr("transform", `translate(${margin.left + legendWidth}, 0)`)
+            .call(yAxisgrad);
 
             // Filter data by type "Observado"
-            const observed_data = data.filter(function(d) {
+            let observed_data = data.filter(function(d) {
                 return d.type === "Observado" && d.disease === disease_name;
             });
 
             // Group observadoData by the "Region" column
-            const groupedData = d3.group(observed_data, d => d.Region);
+            let groupedData = d3.group(observed_data, d => d.Region);
 
             // Create a map to store CSV data values by Region for "Observado" type and maximum date
-            var dataMap = new Map();
+            let dataMap = new Map();
 
             // For each group, filter to keep only the row with the highest date
             Array.from(groupedData.entries()).forEach(function([region, regionData]) {
-                var maxDateRow = regionData.reduce(function(maxDateRow, currentRow) {
+                let maxDateRow = regionData.reduce(function(maxDateRow, currentRow) {
                     if (!maxDateRow || currentRow.date > maxDateRow.date) {
                         return currentRow;
                     } else {
@@ -324,7 +300,7 @@ function updateDataMapObservado() {
                 dataMap.set(region, maxDateRow);
 
                 // Replace the text content for subtitle
-                const format = d3.timeFormat("%d-%b-%y");
+                let format = d3.timeFormat("%d-%b-%y");
                 element.textContent = "Semana epidemiológica " + maxDateRow.epiweek + "/" + (maxDateRow.epiyear - 2000) + " (" + format(maxDateRow.date) + ")";
             });
 
@@ -332,7 +308,7 @@ function updateDataMapObservado() {
             projection.fitSize([width, height], mozambique);
 
             // Append a group for the map features
-            const mapGroup = svg.append("g");
+            let mapGroup = svg.append("g");
 
             // Process GeoJSON features
             mapGroup.selectAll("path")
@@ -341,10 +317,10 @@ function updateDataMapObservado() {
                 .append("path")
                 .attr("d", path)
                 .attr("fill", function(feature) {
-                    var region = feature.properties.ADM1_PT.toUpperCase();
-                    var regionData = dataMap.get(region);
+                    let region = feature.properties.ADM1_PT.toUpperCase();
+                    let regionData = dataMap.get(region);
                     if (regionData) {
-                        var rate = +regionData.rate;
+                        let rate = +regionData.rate;
                         return getColor(rate, maxcolor, mincolor); // Assume getColor() returns appropriate color based on value
                     } else {
                         console.warn("No data found for region:", region);
@@ -353,8 +329,8 @@ function updateDataMapObservado() {
                 })
                 .attr("stroke", "white")
                 .on("mousemove", function(event, feature) {
-                    var region = feature.properties.ADM1_PT.toUpperCase();
-                    var regionData = dataMap.get(region);
+                    let region = feature.properties.ADM1_PT.toUpperCase();
+                    let regionData = dataMap.get(region);
                     if (regionData) {
                         var rate = +regionData.rate; // Assuming "value" is the property to display
                         showTooltipMap(region, rate, event.offsetX, event.offsetY, getColor(rate, maxcolor, mincolor), "left");
@@ -575,8 +551,6 @@ $( document ).ready(function(){
      //Create the initial map
      updateDataMapObservado();
 
-     //Create the initial map
-     updateGradientMap();
 
      //Get the initial disease name
      diseaseName();
@@ -603,7 +577,6 @@ $( document ).ready(function(){
     $('a[href="#malaria"]').click(function(){
         updateDataMapPrevisto(); 
         updateDataMapObservado();
-        updateGradientMap();
         diseaseName();
         plotRegions();
     }); 
@@ -611,7 +584,6 @@ $( document ).ready(function(){
     $('a[href="#diarrhea"]').click(function(){
         updateDataMapPrevisto();
         updateDataMapObservado();
-        updateGradientMap();
         diseaseName();
         plotRegions();
     }); 
