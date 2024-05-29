@@ -18,13 +18,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SO
 */
 
 // Define a custom formatter to concatenate epiweek and epiyear
-function rateCiFormatter(cell, formatterParams, onRendered) {
+function ratesCiFormatter(cell, formatterParams, onRendered) {
     // Get the row data
     var rowData = cell.getRow().getData();
 
     // Concatenate epiweek and epiyear with a separator (e.g., "/")
-    return rowData.Rate_Low.toLocaleString(undefined, { maximumFractionDigits: 1 }) + " a " +
-        rowData.Rate_Up.toLocaleString(undefined, { maximumFractionDigits: 1 });
+    return rowData.rates_Low.toLocaleString(undefined, { maximumFractionDigits: 1 }) + " a " +
+        rowData.rates_upp.toLocaleString(undefined, { maximumFractionDigits: 1 });
 }
 
 // Define a custom formatter to concatenate epiweek and epiyear
@@ -33,7 +33,7 @@ function arrowFormatter(cell, formatterParams, onRendered) {
     var rowData = cell.getRow().getData();
 
     // Concatenate epiweek and epiyear with a separator (e.g., "/")
-    let trend = Math.round(100.0 * (rowData.Rate_Previsto / rowData.Rate_Observado - 1.0)),
+    let trend = Math.round(100.0 * (rowData.rates_Previsto / rowData.rates_Observado - 1.0)),
         arrow = Math.abs(trend) < 0.1 ? "≈" : (trend > 0.0 ? "↑" : "↓");
 
     return arrow;
@@ -84,7 +84,7 @@ function loadCSVData(url, callback) {
             // Rename columns of observado_data
             observado_data = observado_data.map(row => ({
                 province_Observado: row.province,
-                Rate_Observado: row.rate,
+                rates_Observado: row.rates,
                 Cases_Observado: row.cases,
                 Epiweek_Observado: row.epiweek,
                 Epiyear_Observado: row.epiyear,
@@ -94,9 +94,9 @@ function loadCSVData(url, callback) {
             // Rename columns of previsto_data
             previsto_data = previsto_data.map(row => ({
                 province_Previsto: row.province,
-                Rate_Previsto: row.rate,
-                Rate_Low: row.rate_low,
-                Rate_Up: row.rate_up,
+                rates_Previsto: row.rates,
+                rates_Low: row.rates_low,
+                rates_upp: row.rates_upp,
                 Cases_Previsto: row.cases,
                 Cases_Low: row.cases_low,
                 Cases_Up: row.cases_upp,
@@ -120,10 +120,10 @@ function loadCSVData(url, callback) {
             // Calculate the trend values and add them to the data
             mergedData.forEach(row => {
                 // Check if column2 is 0 to prevent division by zero
-                if (row.Rate_Observado === 0) {
+                if (row.rates_Observado === 0) {
                     row.trend = "Undefined";
                 } else {
-                    row.trend = (row.Rate_Previsto / row.Rate_Observado - 1.0);
+                    row.trend = (row.rates_Previsto / row.rates_Observado - 1.0);
                 }
             });
 
@@ -187,14 +187,14 @@ function getTable() {
                 },
                 {
                     title: "Casos previstos (intervalo)",
-                    field: "Rate_Low",
+                    field: "rates_Low",
                     sorter: "number",
                     hozAlign: "right",
                     formatter: casesCiFormatter
                 },
                 {
                     title: "Taxa observada<br>semana mais recente",
-                    field: "Rate_Observado",
+                    field: "rates_Observado",
                     sorter: "number",
                     hozAlign: "right",
                     formatter: function (cell) {
@@ -203,7 +203,7 @@ function getTable() {
                 },
                 {
                     title: "Taxa prevista",
-                    field: "Rate_Previsto",
+                    field: "rates_Previsto",
                     sorter: "number",
                     hozAlign: "right",
                     formatter: function (cell) {
@@ -212,10 +212,10 @@ function getTable() {
                 },
                 {
                     title: "Taxa prevista (intervalo)",
-                    field: "Rate_Low",
+                    field: "rates_Low",
                     sorter: "number",
                     hozAlign: "right",
-                    formatter: rateCiFormatter
+                    formatter: ratesCiFormatter
                 },
             ],
             layout: "fitDataFill", // Fit columns to width of table
@@ -356,12 +356,21 @@ function updateDataMapPrevisto() {
             });
 
             //Get max and minimum value for the colours
-            let maxcolor = d3.max(disease_data, d => taxa ? +d.rate : +d.cases),
-                mincolor = d3.min(disease_data, d => taxa ? +d.rate : +d.cases);
+            let maxcolor = d3.max(disease_data, d => taxa ? +d.rates : +d.cases),
+                mincolor = d3.min(disease_data, d => taxa ? +d.rates : +d.cases);
 
             // Filter data by type "Previsto"
             let previsto_data = data.filter(function (d) {
                 return d.type === "Previsto" && d.disease === disease_name;
+            });
+
+            // Rename the provinces
+            previsto_data.forEach(function (d) {
+                if (d.province === "MAPUTO PROVINCIA") {
+                    d.province = "MAPUTO";
+                } else if (d.province === "MAPUTO CIDADE") {
+                    d.province = "MAPUTO CITY";
+                }
             });
 
             // Group previstoData by the "province" column
@@ -405,7 +414,7 @@ function updateDataMapPrevisto() {
                     let province = feature.properties.ADM1_PT.toUpperCase();
                     let provinceData = dataMap.get(province);
                     if (provinceData) {
-                        let val = taxa ? +provinceData.rate : +provinceData.cases;
+                        let val = taxa ? +provinceData.rates : +provinceData.cases;
                         return getColor(val, maxcolor, mincolor);
                     } else {
                         console.warn("No data found for province:", province);
@@ -417,7 +426,7 @@ function updateDataMapPrevisto() {
                     let province = feature.properties.ADM1_PT.toUpperCase();
                     let provinceData = dataMap.get(province);
                     if (provinceData) {
-                        let val = taxa ? +provinceData.rate : +provinceData.cases;
+                        let val = taxa ? +provinceData.rates : +provinceData.cases;
                         showTooltipMap(province, val, event.offsetX, event.offsetY, getColor(val, maxcolor, mincolor), "right", taxa);
                     } else {
                         console.warn("No data found for province:", province);
@@ -501,8 +510,8 @@ function updateDataMapObservado() {
             });
 
             // Get max and minimum value for the colours
-            let maxcolor = d3.max(disease_data, d => taxa ? +d.rate : +d.cases),
-                mincolor = d3.min(disease_data, d => taxa ? +d.rate : +d.cases);
+            let maxcolor = d3.max(disease_data, d => taxa ? +d.rates : +d.cases),
+                mincolor = d3.min(disease_data, d => taxa ? +d.rates : +d.cases);
 
             // Create the gradient
             // Append a defs (definitions) element to hold the gradient definition
@@ -554,6 +563,15 @@ function updateDataMapObservado() {
                 return d.type === "Observado" && d.disease === disease_name;
             });
 
+            // Rename the provinces
+            observed_data.forEach(function (d) {
+                if (d.province === "MAPUTO PROVINCIA") {
+                    d.province = "MAPUTO";
+                } else if (d.province === "MAPUTO CIDADE") {
+                    d.province = "MAPUTO CITY";
+                }
+            });
+
             // Group observadoData by the "province" column
             let groupedData = d3.group(observed_data, d => d.province);
 
@@ -594,7 +612,7 @@ function updateDataMapObservado() {
                     let province = feature.properties.ADM1_PT.toUpperCase();
                     let provinceData = dataMap.get(province);
                     if (provinceData) {
-                        let val = taxa ? +provinceData.rate : +provinceData.cases;
+                        let val = taxa ? +provinceData.rates : +provinceData.cases;
                         return getColor(val, maxcolor, mincolor); // Assume getColor() returns appropriate color based on value
                     } else {
                         console.warn("No data found for province:", province);
@@ -606,7 +624,7 @@ function updateDataMapObservado() {
                     let province = feature.properties.ADM1_PT.toUpperCase();
                     let provinceData = dataMap.get(province);
                     if (provinceData) {
-                        let val = taxa ? +provinceData.rate : +provinceData.cases;
+                        let val = taxa ? +provinceData.rates : +provinceData.cases;
                         showTooltipMap(province, val, event.offsetX, event.offsetY, getColor(val, maxcolor, mincolor), "left", taxa);
                     } else {
                         console.warn("No data found for province:", province);
@@ -667,8 +685,11 @@ function plotprovince(provinceName) {
         case "CABO DELGADO":
             province_id = "CABODELGADO";
             break;
-        case "MAPUTO CITY":
+        case "MAPUTO CIDADE":
             province_id = "MAPUTOCIDADE";
+            break;
+        case "MAPUTO PROVINCIA":
+            province_id = "MAPUTO";
             break;
         default:
             province_id = province_name;
@@ -702,9 +723,9 @@ function plotprovince(provinceName) {
 
         data.forEach(function (d) {
             d.date = new Date(d.date);
-            d.val = taxa ? +d.rate : +d.cases;
-            d.val_low = taxa ? +d.rate_low : +d.cases_low; // Assuming these properties exist in your dataset
-            d.val_up = taxa ? +d.rate_up : +d.cases_upp;
+            d.val = taxa ? +d.rates : +d.cases;
+            d.val_low = taxa ? +d.rates_low : +d.cases_low; // Assuming these properties exist in your dataset
+            d.val_up = taxa ? +d.rates_upp : +d.cases_upp;
             d.epiweek = +d.epiweek;
         });
 
@@ -811,8 +832,8 @@ function plotprovince(provinceName) {
 }
 
 function plotprovinces() {
-    const provinceNames = ["CABO DELGADO", "GAZA", "INHAMBANE", "MANICA", "MAPUTO",
-        "MAPUTO CITY", "NAMPULA", "NIASSA", "SOFALA", "TETE", "ZAMBEZIA"];
+    const provinceNames = ["CABO DELGADO", "GAZA", "INHAMBANE", "MANICA", "MAPUTO PROVINCIA",
+        "MAPUTO CIDADE", "NAMPULA", "NIASSA", "SOFALA", "TETE", "ZAMBEZIA"];
     provinceNames.forEach(function (element) {
         plotprovince(element);
     });
