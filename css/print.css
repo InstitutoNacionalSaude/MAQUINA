@@ -1,7 +1,7 @@
 @media print {
 
     @page {
-        size: landscape !important;
+        size: A4 landscape !important;
         margin: 0mm;
     }
 
@@ -14,8 +14,10 @@
         width: 100% !important;
     }
 
-    .tabulator-print-table ~ .tabulator-print-table {
+    .tabulator-print-table~.tabulator-print-table {
         display: none !important;
+        width: 100% !important;
+        font-size: 10px !important;
     }
 
     .no-print {
