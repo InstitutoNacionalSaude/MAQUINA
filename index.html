@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt">
+
 <head>
     <meta charset="utf-8">
 
@@ -24,21 +25,26 @@
     <meta name="description" content="Mozambique malaria and dengue forecasts">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="keywords" content="Mozambique, Malaria, Dengue, Model, Projections, Forecast, Moçambique, Malária, Doenças Diarréicas, Máquina">
+    <meta name="keywords"
+        content="Mozambique, Malaria, Dengue, Model, Projections, Forecast, Moçambique, Malária, Doenças Diarréicas, Máquina">
     <meta name="author" content="Rodrigo Zepeda-Tello">
 
     <!-- TODO: Change the cards and description here-->
     <meta name="twitter:card" content="summary"><!-- required -->
     <meta name="twitter:site" content="@MaquinaMoçambique"><!-- required -->
     <meta name="twitter:title" content="MÁQUINA: Moçambique"><!-- required -->
-    <meta name="twitter:description" content="Predicciones del % de ocupación hospitalaria de la red IRAG"><!-- optional -->
-    <meta name="twitter:image" content="https://github.com/RodrigoZepeda/CapacidadHospitalariaMX/blob/master/docs/images/CapacidadHospitalariaLogoDark.png"><!-- optional -->
+    <meta name="twitter:description" content="Previsões de casos de dengue e malária em Moçambique">
+    <!-- optional -->
+    <meta name="twitter:image"
+        content="https://github.com/RodrigoZepeda/CapacidadHospitalariaMX/blob/master/docs/images/CapacidadHospitalariaLogoDark.png">
+    <!-- optional -->
     <meta name="twitter:image:alt" content="Logo"><!-- optional -->
-    
-    <meta property="og:title" content="Capacidad Hospitalaria MX" />
-    <meta property="og:url" content="https://rodrigozepeda.github.io/CapacidadHospitalariaMX/" />
-    <meta property="og:description" content="Predicciones del % de ocupación hospitalaria de la red IRAG">
-    <meta property="og:image" content="https://github.com/RodrigoZepeda/CapacidadHospitalariaMX/blob/master/docs/images/CapacidadHospitalariaLogoDark.png">
+
+    <meta property="og:title" content="MÁQUINA: Moçambique" />
+    <meta property="og:url" content="https://rodrigozepeda.github.io/MAQUINA/" />
+    <meta property="og:description" content="Previsões de casos de dengue e malária em Moçambique">
+    <meta property="og:image"
+        content="https://github.com/RodrigoZepeda/CapacidadHospitalariaMX/blob/master/docs/images/CapacidadHospitalariaLogoDark.png">
 
     <!--<link rel="apple-touch-icon" sizes="180x180" href="images/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="images/favicon-32x32.png">
@@ -46,7 +52,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="images/android-chrome-512x512.png">
     <link rel="icon" type="image/png" sizes="16x16" href="images/android-chrome-192x192.png">
     -->
-    
+
     <meta name="msapplication-TileColor" content="#ffffff">
     <meta name="theme-color" content="#ffffff">
 
@@ -60,7 +66,7 @@
 
     <!--Plotting-->
     <script src="src/d3.v7.min.js"></script>
-    
+
     <!--Slider-->
     <!--https://slawomir-zaziablo.github.io/range-slider-->
     <link rel="stylesheet" href="css/rSlider.min.css">
@@ -73,235 +79,248 @@
     <script src="src/luxon.min.js"></script>
 
     <script src="src/maps.js"></script>
-    <link href="css/custom.css" rel="stylesheet" />
+    <link href="css/custom.css" rel="stylesheet" type="text/css"/>
+    <link rel="stylesheet" type="text/css" media="print" href="print.css">
 
 </head>
 
 <body>
-<nav class="navbar navbar-expand-sm navbar-dark bg-dark px-5 fixed-top">
-    <span class="navbar-brand">MÁQUINA:</span> 
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Doença">
-        <span class="navbar-toggler-icon"></span>
-    </button>
+    <nav class="navbar navbar-expand-sm navbar-dark bg-dark px-5 fixed-top no-print">
+        <span class="navbar-brand">MÁQUINA:</span>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Doença">
+            <span class="navbar-toggler-icon"></span>
+        </button>
 
-    <div class="collapse navbar-collapse" id="navbarSupportedContent">
-        <ul class="navbar-nav mr-auto">
-            <li class="nav-item">
-                <a class="nav-link" id="malaria" href="#malaria" onclick="setActiveTab('malaria')">Malária</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" id="diarrhea" href="#diarrhea" onclick="setActiveTab('diarrhea')">Doenças diarréicas</a>
-            </li>            
-        </ul>
-        <ul class="navbar-nav ms-auto navbar-right">
-            <div class="mt-2">
-                <span class="nav-item" style="color: #ccc;"><i>Casos totales</i></span>
-                <label class="switch">
-                    <input type="checkbox" id="casosswitch" checked>
-                    <span class="slider round"></span>
-                </label>
-                <span class="nav-item" style="color: #ccc;"><i>Taxa por 100mil</i></span>
-            </div>            
-        </ul>
-    </div>
-</nav>    
-<main role="main">
-    <div class="container-fluid mt-3">
-        <div class="row">
-            <div class="col-12">
-                <div class="card mt-5">
-                    <div class="card-header">
-                    <h2 class= "lead mt-3" id="disease_title"></h2>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item">
+                    <a class="nav-link" id="malaria" href="#malaria" onclick="setActiveTab('malaria')">Malária</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="diarrhea" href="#diarrhea" onclick="setActiveTab('diarrhea')">Doenças
+                        diarréicas</a>
+                </li>
+            </ul>
+            <ul class="navbar-nav ms-auto navbar-right">
+                <div class="mt-2">
+                    <span class="nav-item" style="color: #ccc;"><i>Casos totales</i></span>
+                    <label class="switch">
+                        <input type="checkbox" id="casosswitch" checked>
+                        <span class="slider round"></span>
+                    </label>
+                    <span class="nav-item" style="color: #ccc;"><i>Taxa por 100mil</i></span>
+                </div>
+            </ul>
+        </div>
+    </nav>
+    <main role="main">
+        <div class="container-fluid mt-3">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card mt-5 titlecard">
+                        <div class="card-header">
+                            <h2 class="lead mt-3" id="disease_title"></h2>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-        <div class="row">
-            <div class="col-12">
-                <div class="card mt-3">
-                    <div class="card-header row row-cols-1 row-cols-md-2 row-cols-lg-2">
-                        <span class="lead">Incidência</span>                        
-                    </div>
-                    <div class="card-body">
-                        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 justify-content-center">
-                            <div class="col mt-3" id="leftMapContainer" style="height: 500px;">
-                                <h5 id="observadoMapText">Observação semana mais recente</h5>
-                                <h6 id="semanaObservadoMapText"></h6>
-                                <svg id="leftMapCanvas" width="400" height="400"></svg>
-                            </div>
-                            <div class="col mt-3" id="gradientcontainer" style="height: 500px;">
-                                <h5 id="legendatext">Legenda</h5>
-                                <h6 id="legendasubtitle"></h6>
-                                <svg id="gradientMap" width="400" height="400"></svg>
-                            </div>
-                            <div class="col mt-3" id="rightMapContainer" style="height: 500px;">
-                                <h5 id="previstoMapText"></h5>
-                                <h6 id="semanaPrevistoMapText"></h6>
-                                <svg id="rightMapCanvas" width="400" height="400"></svg>
+            <div class="row">
+                <div class="col-12">
+                    <div class="card mt-3">
+                        <div class="card-header row row-cols-1 row-cols-md-2 row-cols-lg-2">
+                            <span class="lead">Incidência</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="row row-cols-1 row-cols-md-3 row-cols-lg-3 justify-content-center">
+                                <div class="col mt-3" id="leftMapContainer" style="height: 550px;">
+                                    <h5 id="observadoMapText">Observação semana mais recente</h5>
+                                    <h6 id="semanaObservadoMapText"></h6>
+                                    <svg id="leftMapCanvas" width="400" height="400" class="chart map"></svg>
+                                </div>
+                                <div class="col mt-3" id="gradientcontainer" style="height: 550px;">
+                                    <h5 id="legendatext">Legenda</h5>
+                                    <h6 id="legendasubtitle"></h6>
+                                    <svg id="gradientMap" width="400" height="400" class="chart maplegend"></svg>
+                                </div>
+                                <div class="col mt-3" id="rightMapContainer" style="height: 550px;">
+                                    <h5 id="previstoMapText"></h5>
+                                    <h6 id="semanaPrevistoMapText"></h6>
+                                    <svg id="rightMapCanvas" width="400" height="400" class="chart map"></svg>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-        <div class="row">
-            <div class="col-12">
-                <div class="card mt-3">
-                    <div class="card-header">
-                        <span class="lead">Semana:</span>
-                    </div>
-                    <div class="card-body" style="width: 100%;">
-                        <div class="container" style="width: 100%;">    
-                            <div class="slider-container">
-                                <input type="text" id="weekSlider" value="1"/>
+            <div class="row no-print">
+                <div class="col-12">
+                    <div class="card mt-3">
+                        <div class="card-header">
+                            <span class="lead">Semana:</span>
+                        </div>
+                        <div class="card-body" style="width: 100%;">
+                            <div class="container" style="width: 100%;">
+                                <div class="slider-container">
+                                    <input type="text" id="weekSlider" value="1" />
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-        <div class="row">
-            <div class="col-12">
-                <div class="card mt-3">
-                    <div class="card-header">
-                        <h5 class="card-title lead" id="tabletitle"></h5>
+            <div class="row">
+                <div class="col-12">
+                    <div class="card mt-3">
+                        <div class="card-header">
+                            <h5 class="card-title lead" id="tabletitle"></h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="table"></div>
+                            </table>
+                        </div>
+                        <div class="card-footer">
+                            <span id="dateobs"></span>
+                        </div>
                     </div>
-                    <div class="card-body">                        
-                        <div id="table"></div>
-                        </table>
+                </div>
+            </div>
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 justify-content-center">
+                <div class="col">
+                    <div class="card mt-3 trendcard">
+                        <div class="card-header">
+                            Niassa
+                        </div>
+                        <div class="card-body">
+                            <svg id="NIASSA" width="400" height="250" class="chart lineplot"></svg>
+                        </div>
                     </div>
-                    <div class="card-footer"> 
-                        <span id="dateobs"></span>
+                </div>
+                <div class="col">
+                    <div class="card mt-3 trendcard">
+                        <div class="card-header">
+                            Cabo Delgado
+                        </div>
+                        <div class="card-body">
+                            <svg id="CABODELGADO" width="375" height="250" class="chart lineplot"></svg>
+                        </div>
                     </div>
-                </div>                
+                </div>
+                <div class="col">
+                    <div class="card mt-3 trendcard">
+                        <div class="card-header">
+                            Nampula
+                        </div>
+                        <div class="card-body">
+                            <svg id="NAMPULA" width="400" height="250" class="chart lineplot"></svg>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card mt-3 trendcard">
+                        <div class="card-header">
+                            Zambézia
+                        </div>
+                        <div class="card-body">
+                            <svg id="ZAMBEZIA" width="400" height="250" class="chart lineplot"></svg>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card mt-3 trendcard">
+                        <div class="card-header">
+                            Tete
+                        </div>
+                        <div class="card-body">
+                            <svg id="TETE" width="400" height="250" class="chart lineplot"></svg>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card mt-3 trendcard">
+                        <div class="card-header">
+                            Manica
+                        </div>
+                        <div class="card-body">
+                            <svg id="MANICA" width="400" height="250" class="chart lineplot"></svg>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card mt-3 trendcard">
+                        <div class="card-header">
+                            Sofala
+                        </div>
+                        <div class="card-body">
+                            <svg id="SOFALA" width="400" height="250" class="chart lineplot"></svg>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card mt-3 trendcard">
+                        <div class="card-header">
+                            Inhambane
+                        </div>
+                        <div class="card-body">
+                            <svg id="INHAMBANE" width="400" height="250" class="chart lineplot"></svg>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card mt-3 trendcard">
+                        <div class="card-header">
+                            Gaza
+                        </div>
+                        <div class="card-body">
+                            <svg id="GAZA" width="400" height="250" class="chart lineplot"></svg>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card mt-3 trendcard">
+                        <div class="card-header">
+                            Maputo
+                        </div>
+                        <div class="card-body">
+                            <svg id="MAPUTO" width="400" height="250" class="chart lineplot"></svg>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card mt-3 trendcard">
+                        <div class="card-header">
+                            Cidade de Maputo
+                        </div>
+                        <div class="card-body">
+                            <svg id="MAPUTOCIDADE" width="400" height="250" class="chart lineplot"></svg>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 justify-content-center">
-            <div class="col">
-                <div class="card mt-3 trendcard">
-                    <div class="card-header">
-                        Niassa
-                    </div>
-                    <div class="card-body">
-                        <svg id="NIASSA" width="400" height="250"></svg>
-                    </div>
-                </div>
+        <div class="card mt-3 no-print">
+            <div class="card-body justify-content-center text-center">
+                <a href="#" class="btn btn-secondary" onclick="window.print()">Imprimir / PDF</a>
             </div>
-            <div class="col">
-                <div class="card mt-3 trendcard">
-                    <div class="card-header">
-                        Cabo Delgado
-                    </div>
-                    <div class="card-body">
-                        <svg id="CABODELGADO" width="375" height="250"></svg>
-                    </div>
-                </div>
+        </div>
+    </main>
+    <div class="container">
+        <footer class="d-flex flex-wrap justify-content-between align-items-center py-3 my-4 border-top">
+            <div>
+                <p>
+                    <small>
+                        Lembre-se de que as projecções neste painel são geradas por um modelo automatizado e podem
+                        conter erros. A compreensão
+                        dos conceitos epidemiológicos é essencial para uma interpretação correcta. Consulte fontes
+                        adicionais para obter o contexto.
+                    </small>
+                </p>
             </div>
-            <div class="col">
-                <div class="card mt-3 trendcard">
-                    <div class="card-header">
-                        Nampula
-                    </div>
-                    <div class="card-body">
-                        <svg id="NAMPULA" width="400" height="250"></svg>
-                    </div>
-                </div>
-            </div>
-            <div class="col">
-                <div class="card mt-3 trendcard">
-                    <div class="card-header">
-                        Zambézia
-                    </div>
-                    <div class="card-body">
-                        <svg id="ZAMBEZIA" width="400" height="250"></svg>
-                    </div>
-                </div>
-            </div>
-            <div class="col">
-                <div class="card mt-3 trendcard">
-                    <div class="card-header">
-                        Tete
-                    </div>
-                    <div class="card-body">
-                        <svg id="TETE" width="400" height="250"></svg>
-                    </div>
-                </div>
-            </div>
-            <div class="col">
-                <div class="card mt-3 trendcard">
-                    <div class="card-header">
-                        Manica
-                    </div>
-                    <div class="card-body">
-                        <svg id="MANICA" width="400" height="250"></svg>
-                    </div>
-                </div>
-            </div> 
-            <div class="col">
-                <div class="card mt-3 trendcard">
-                    <div class="card-header">
-                        Sofala
-                    </div>
-                    <div class="card-body">
-                        <svg id="SOFALA" width="400" height="250"></svg>
-                    </div>
-                </div>
-            </div>
-            <div class="col">
-                <div class="card mt-3 trendcard">
-                    <div class="card-header">
-                        Inhambane
-                    </div>
-                    <div class="card-body">
-                        <svg id="INHAMBANE" width="400" height="250"></svg>
-                    </div>
-                </div>
-            </div>              
-            <div class="col">
-                <div class="card mt-3 trendcard">
-                    <div class="card-header">
-                        Gaza
-                    </div>
-                    <div class="card-body">
-                        <svg id="GAZA" width="400" height="250"></svg>
-                    </div>
-                </div>
-            </div>
-            <div class="col">
-                <div class="card mt-3 trendcard">
-                    <div class="card-header">
-                        Maputo
-                    </div>
-                    <div class="card-body">
-                        <svg id="MAPUTO" width="400" height="250"></svg>
-                    </div>
-                </div>
-            </div>
-            <div class="col">
-                <div class="card mt-3 trendcard">
-                    <div class="card-header">
-                        Cidade de Maputo
-                    </div>
-                    <div class="card-body">
-                        <svg id="MAPUTOCIDADE" width="400" height="250"></svg>
-                    </div>
-                </div>
-            </div>
-        </div>    
+        </footer>
     </div>
-</main>
-<div class="container">
-    <footer class="d-flex flex-wrap justify-content-between align-items-center py-3 my-4 border-top">
-        <div>
-            <p>
-                <small>
-                    Lembre-se de que as projecções neste painel são geradas por um modelo automatizado e podem conter erros. A compreensão 
-                    dos conceitos epidemiológicos é essencial para uma interpretação correcta. Consulte fontes adicionais para obter o contexto.
-                </small>
-            </p>
-        </div>
-    </footer>
-</div>
+
+    
 
 </body>
+
 </html>

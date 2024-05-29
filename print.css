@@ -1,0 +1,46 @@
+@media print {
+
+    @page { 
+        size: landscape;
+    }
+
+    body {
+        margin: 20px;
+        padding: 1%;
+        font-size: 12px !important; 
+    }
+
+    .no-print {
+        display: none !important;
+        visibility: hidden !important;
+    }
+    
+    .map {
+        break-after: always;
+        width: 100% !important;
+        height: 550px !important; 
+    }
+
+    .maplegend {
+        break-after: always;
+        width: 400px !important;
+        height: 550px !important; 
+    }
+
+    .lineplot {
+        width: 400px !important;
+        height: 250px !important;
+    }
+
+    .card {
+        break-after: always;
+        page-break-inside: avoid !important;
+    }
+
+    .card .titlecard {
+        break-after: avoid;
+        page-break-inside: auto; /* Allow normal flow for title cards */
+    }
+    
+
+}

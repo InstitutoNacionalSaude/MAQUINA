@@ -1,8 +1,5 @@
 // open /Applications/Google\ Chrome.app --args --user-data-dir=.--disable-web-security
 
-//Create Datetime function shorthand
-const DateTime = luxon.DateTime;
-
 // Define a custom formatter to concatenate epiweek and epiyear
 function rateCiFormatter(cell, formatterParams, onRendered) {
     // Get the row data
@@ -19,9 +16,10 @@ function arrowFormatter(cell, formatterParams, onRendered) {
     var rowData = cell.getRow().getData();
     
     // Concatenate epiweek and epiyear with a separator (e.g., "/")
-    let trend = Math.round(100.0*(rowData.Rate_Previsto/rowData.Rate_Observado - 1.0));
+    let trend = Math.round(100.0*(rowData.Rate_Previsto/rowData.Rate_Observado - 1.0)),
+        arrow = Math.abs(trend) < 0.1 ? "≈" : (trend > 0.0 ? "↑" : "↓");
 
-    return Math.abs(trend) < 0.1 ? "≈" : (trend > 0.0 ? "↑" : "↓");
+    return arrow;
 }
 
 // Define a custom formatter to concatenate epiweek and epiyear
@@ -51,7 +49,7 @@ function loadCSVData(url, callback) {
 
             // Parse date values as JavaScript Date objects
             parsedData.forEach(row => {
-                row.date = DateTime.fromISO(row.date);
+                row.date = luxon.DateTime.fromISO(row.date);
             });                
 
             // Filter data based on disease_name
@@ -451,7 +449,7 @@ function updateDataMapObservado() {
     svggrad.selectAll("*").remove();
 
     // Define the dimensions and margins for the plot
-    let margin = { top: 50, right: 50, bottom: 30, left: 40 };
+    let margin = { top: 50, right: 100, bottom: 30, left: 100 };
 
     // Get the width and height from the SVG element
     let width_grad  = +svggrad.attr("width"),
@@ -866,5 +864,26 @@ $( document ).ready(function(){
         updateDataMapObservado();
         plotRegions();
     });
+
+    /*
+    window.addEventListener('beforeprint', () => {
+        // Code to redraw D3.js plots for print
+        d3.selectAll('.lineplot').each(function() {
+            let lineplot = d3.select(this);
+            lineplot.attr('width', '400px').attr('height', '250px');
+            plotRegions();
+        });
+    });
+    
+    window.addEventListener('afterprint', () => {
+        // Code to restore D3.js plots after print
+        d3.selectAll('.lineplot').each(function() {
+            let lineplot = d3.select(this);
+            lineplot.attr('width', '400px').attr('height', '250px');
+            plotRegions();
+        });
+    });
+    */
+
 });
 
