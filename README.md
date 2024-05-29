@@ -1,4 +1,4 @@
-#MAQUINA: [M]odelo de [A]nálise [Qu]antitativa para doenças [In]fecciosas 
+# MAQUINA: [M]odelo de [A]nálise [Qu]antitativa para doenças [In]fecciosas 
 
 ## Updating
 
