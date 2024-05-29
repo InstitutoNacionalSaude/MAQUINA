@@ -5,26 +5,14 @@
     }
 
     body {
-        margin: 20px;
-        padding: 1%;
+        margin: 5px;
+        padding: -10px;
         font-size: 12px !important; 
     }
 
     .no-print {
         display: none !important;
         visibility: hidden !important;
-    }
-    
-    .map {
-        break-after: always;
-        width: 100% !important;
-        height: 550px !important; 
-    }
-
-    .maplegend {
-        break-after: always;
-        width: 400px !important;
-        height: 550px !important; 
     }
 
     .lineplot {
@@ -33,14 +21,16 @@
     }
 
     .card {
-        break-after: always;
-        page-break-inside: avoid !important;
+        page-break-inside: avoid; 
+    }  
+    
+    .mapcontainer {
+        page-break-after: always;
     }
 
-    .card .titlecard {
-        break-after: avoid;
+    .card.titlecard {
+        page-break-after: avoid; /* Allow normal flow for title cards */
         page-break-inside: auto; /* Allow normal flow for title cards */
     }
-    
 
 }
