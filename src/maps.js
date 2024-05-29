@@ -83,9 +83,9 @@ function loadCSVData(url, callback) {
 
             // Rename columns of observado_data
             observado_data = observado_data.map(row => ({
-                Region_Observado: row.Region,
+                province_Observado: row.province,
                 Rate_Observado: row.rate,
-                Cases_Observado: row.incident_cases,
+                Cases_Observado: row.cases,
                 Epiweek_Observado: row.epiweek,
                 Epiyear_Observado: row.epiyear,
                 Date_Observado: row.date,
@@ -93,27 +93,27 @@ function loadCSVData(url, callback) {
 
             // Rename columns of previsto_data
             previsto_data = previsto_data.map(row => ({
-                Region_Previsto: row.Region,
+                province_Previsto: row.province,
                 Rate_Previsto: row.rate,
                 Rate_Low: row.rate_low,
                 Rate_Up: row.rate_up,
-                Cases_Previsto: row.incident_cases,
-                Cases_Low: row.incident_cases_low,
-                Cases_Up: row.incident_cases_upp,
+                Cases_Previsto: row.cases,
+                Cases_Low: row.cases_low,
+                Cases_Up: row.cases_upp,
                 Epiweek_Previsto: row.epiweek,
                 Epiyear_Previsto: row.epiyear,
                 Date_Previsto: row.date,
             }));
 
-            // Create a map of observado_data by Region
+            // Create a map of observado_data by province
             let observadoMap = new Map();
             observado_data.forEach(row => {
-                observadoMap.set(row.Region_Observado, row);
+                observadoMap.set(row.province_Observado, row);
             });
 
-            // Merge observado_data and previsto_data based on Region
+            // Merge observado_data and previsto_data based on province
             let mergedData = previsto_data.map(previstoRow => {
-                let observadoRow = observadoMap.get(previstoRow.Region_Previsto);
+                let observadoRow = observadoMap.get(previstoRow.province_Previsto);
                 return { ...previstoRow, ...observadoRow };
             });
 
@@ -148,7 +148,7 @@ function getTable() {
             data: data,
             autoColumns: false, // Let us define columns
             columns: [
-                { title: "Region", field: "Region_Previsto", sorter: "string", hozAlign: "right", frozen: true },
+                { title: "province", field: "province_Previsto", sorter: "string", hozAlign: "right", frozen: true },
                 {
                     title: "Tendência",
                     field: "trend",
@@ -227,7 +227,7 @@ function getTable() {
             movableColumns: true,      //allow column order to be changed
             columnHeaderVertAlign: "bottom", //align header contents to bottom of cell
             initialSort: [ // Specify the initial sort order
-                { column: "Region_Previsto", dir: "asc" }, // Sort by date in ascending order by default
+                { column: "province_Previsto", dir: "asc" }, // Sort by date in ascending order by default
             ]
         });
     });
@@ -356,18 +356,18 @@ function updateDataMapPrevisto() {
             });
 
             //Get max and minimum value for the colours
-            let maxcolor = d3.max(disease_data, d => taxa ? +d.rate : +d.incident_cases),
-                mincolor = d3.min(disease_data, d => taxa ? +d.rate : +d.incident_cases);
+            let maxcolor = d3.max(disease_data, d => taxa ? +d.rate : +d.cases),
+                mincolor = d3.min(disease_data, d => taxa ? +d.rate : +d.cases);
 
             // Filter data by type "Previsto"
             let previsto_data = data.filter(function (d) {
                 return d.type === "Previsto" && d.disease === disease_name;
             });
 
-            // Group previstoData by the "Region" column
-            let groupedData = d3.group(previsto_data, d => d.Region);
+            // Group previstoData by the "province" column
+            let groupedData = d3.group(previsto_data, d => d.province);
 
-            // Create a map to store CSV data values by Region for "Previsto" type and maximum date
+            // Create a map to store CSV data values by province for "Previsto" type and maximum date
             let dataMap = new Map();
 
             let nweeks = parseInt($('#weekSlider').val());
@@ -376,19 +376,19 @@ function updateDataMapPrevisto() {
             updatePrevistoTitle(nweeks);
 
             // For each group, filter to keep only the row with the nth minimal date
-            Array.from(groupedData.entries()).forEach(function ([region, regionData]) {
-                let sortedDates = regionData.map(function (d) { return d.date; }).sort(function (a, b) { return a - b; }); // Sort dates in ascending order
+            Array.from(groupedData.entries()).forEach(function ([province, provinceData]) {
+                let sortedDates = provinceData.map(function (d) { return d.date; }).sort(function (a, b) { return a - b; }); // Sort dates in ascending order
                 if (sortedDates.length >= nweeks) {
                     let nthMinDate = sortedDates[nweeks - 1]; // Retrieve the nth minimal date
-                    let nthMinDateRow = regionData.find(function (d) { return d.date.getTime() === nthMinDate.getTime(); }); // Find the row with the nth minimal date
-                    dataMap.set(region, nthMinDateRow); // Store the row in the dataMap with the respective region key
+                    let nthMinDateRow = provinceData.find(function (d) { return d.date.getTime() === nthMinDate.getTime(); }); // Find the row with the nth minimal date
+                    dataMap.set(province, nthMinDateRow); // Store the row in the dataMap with the respective province key
 
                     // Replace the text content for subtitle
                     let format = d3.timeFormat("%d-%b-%y");
                     element.textContent = "Semana epidemiológica " + nthMinDateRow.epiweek + "/" + (nthMinDateRow.epiyear - 2000) + " (" + format(nthMinDateRow.date) + ")";
 
                 } else {
-                    dataMap.set(region, null); // If there are less than n dates, store null in the dataMap
+                    dataMap.set(province, null); // If there are less than n dates, store null in the dataMap
                 }
             });
 
@@ -402,25 +402,25 @@ function updateDataMapPrevisto() {
                 .append("path")
                 .attr("d", path)
                 .attr("fill", function (feature) {
-                    let region = feature.properties.ADM1_PT.toUpperCase();
-                    let regionData = dataMap.get(region);
-                    if (regionData) {
-                        let val = taxa ? +regionData.rate : +regionData.incident_cases;
+                    let province = feature.properties.ADM1_PT.toUpperCase();
+                    let provinceData = dataMap.get(province);
+                    if (provinceData) {
+                        let val = taxa ? +provinceData.rate : +provinceData.cases;
                         return getColor(val, maxcolor, mincolor);
                     } else {
-                        console.warn("No data found for region:", region);
+                        console.warn("No data found for province:", province);
                         return "black";
                     }
                 })
                 .attr("stroke", "white")
                 .on("mousemove", function (event, feature) {
-                    let region = feature.properties.ADM1_PT.toUpperCase();
-                    let regionData = dataMap.get(region);
-                    if (regionData) {
-                        let val = taxa ? +regionData.rate : +regionData.incident_cases;
-                        showTooltipMap(region, val, event.offsetX, event.offsetY, getColor(val, maxcolor, mincolor), "right", taxa);
+                    let province = feature.properties.ADM1_PT.toUpperCase();
+                    let provinceData = dataMap.get(province);
+                    if (provinceData) {
+                        let val = taxa ? +provinceData.rate : +provinceData.cases;
+                        showTooltipMap(province, val, event.offsetX, event.offsetY, getColor(val, maxcolor, mincolor), "right", taxa);
                     } else {
-                        console.warn("No data found for region:", region);
+                        console.warn("No data found for province:", province);
                     }
                 })
                 .on("mouseout", function () {
@@ -501,8 +501,8 @@ function updateDataMapObservado() {
             });
 
             // Get max and minimum value for the colours
-            let maxcolor = d3.max(disease_data, d => taxa ? +d.rate : +d.incident_cases),
-                mincolor = d3.min(disease_data, d => taxa ? +d.rate : +d.incident_cases);
+            let maxcolor = d3.max(disease_data, d => taxa ? +d.rate : +d.cases),
+                mincolor = d3.min(disease_data, d => taxa ? +d.rate : +d.cases);
 
             // Create the gradient
             // Append a defs (definitions) element to hold the gradient definition
@@ -554,15 +554,15 @@ function updateDataMapObservado() {
                 return d.type === "Observado" && d.disease === disease_name;
             });
 
-            // Group observadoData by the "Region" column
-            let groupedData = d3.group(observed_data, d => d.Region);
+            // Group observadoData by the "province" column
+            let groupedData = d3.group(observed_data, d => d.province);
 
-            // Create a map to store CSV data values by Region for "Observado" type and maximum date
+            // Create a map to store CSV data values by province for "Observado" type and maximum date
             let dataMap = new Map();
 
             // For each group, filter to keep only the row with the highest date
-            Array.from(groupedData.entries()).forEach(function ([region, regionData]) {
-                let maxDateRow = regionData.reduce(function (maxDateRow, currentRow) {
+            Array.from(groupedData.entries()).forEach(function ([province, provinceData]) {
+                let maxDateRow = provinceData.reduce(function (maxDateRow, currentRow) {
                     if (!maxDateRow || currentRow.date > maxDateRow.date) {
                         return currentRow;
                     } else {
@@ -571,7 +571,7 @@ function updateDataMapObservado() {
                 }, null);
 
                 //Get the data for the map
-                dataMap.set(region, maxDateRow);
+                dataMap.set(province, maxDateRow);
 
                 // Replace the text content for subtitle
                 let format = d3.timeFormat("%d-%b-%y");
@@ -591,25 +591,25 @@ function updateDataMapObservado() {
                 .append("path")
                 .attr("d", path)
                 .attr("fill", function (feature) {
-                    let region = feature.properties.ADM1_PT.toUpperCase();
-                    let regionData = dataMap.get(region);
-                    if (regionData) {
-                        let val = taxa ? +regionData.rate : +regionData.incident_cases;
+                    let province = feature.properties.ADM1_PT.toUpperCase();
+                    let provinceData = dataMap.get(province);
+                    if (provinceData) {
+                        let val = taxa ? +provinceData.rate : +provinceData.cases;
                         return getColor(val, maxcolor, mincolor); // Assume getColor() returns appropriate color based on value
                     } else {
-                        console.warn("No data found for region:", region);
+                        console.warn("No data found for province:", province);
                         return "black";
                     }
                 })
                 .attr("stroke", "white")
                 .on("mousemove", function (event, feature) {
-                    let region = feature.properties.ADM1_PT.toUpperCase();
-                    let regionData = dataMap.get(region);
-                    if (regionData) {
-                        let val = taxa ? +regionData.rate : +regionData.incident_cases;
-                        showTooltipMap(region, val, event.offsetX, event.offsetY, getColor(val, maxcolor, mincolor), "left", taxa);
+                    let province = feature.properties.ADM1_PT.toUpperCase();
+                    let provinceData = dataMap.get(province);
+                    if (provinceData) {
+                        let val = taxa ? +provinceData.rate : +provinceData.cases;
+                        showTooltipMap(province, val, event.offsetX, event.offsetY, getColor(val, maxcolor, mincolor), "left", taxa);
                     } else {
-                        console.warn("No data found for region:", region);
+                        console.warn("No data found for province:", province);
                     }
                 })
                 .on("mouseout", function () {
@@ -625,8 +625,8 @@ function updateDataMapObservado() {
     });
 }
 
-// Function to show tooltip in region map
-function showTooltipMap(region, value, x, y, bgcolor, side, taxa) {
+// Function to show tooltip in province map
+function showTooltipMap(province, value, x, y, bgcolor, side, taxa) {
 
     // Round the value
     let roundedValue = value.toLocaleString(undefined, { maximumFractionDigits: 1 });
@@ -648,37 +648,37 @@ function showTooltipMap(region, value, x, y, bgcolor, side, taxa) {
             .style("pointer-events", "none");
     }
 
-    // Update tooltip content with region in bold and rounded value
-    tooltip.html("<strong>" + region + "</strong>:<br>" + roundedValue + (taxa ? "/100 mil habitantes" : " casos"))
+    // Update tooltip content with province in bold and rounded value
+    tooltip.html("<strong>" + province + "</strong>:<br>" + roundedValue + (taxa ? "/100 mil habitantes" : " casos"))
         .style("left", x + "px")
         .style("top", (y - 1.1 * height) + "px")
         .style("background-color", bgcolor)
         .style("display", "block");
 }
 
-function plotRegion(regionName) {
+function plotprovince(provinceName) {
 
     //Decide whether its casos or taxa
     let taxa = document.getElementById('casosswitch').checked;
 
-    let region_name = regionName.toUpperCase();
-    let region_id;
-    switch (region_name) {
+    let province_name = provinceName.toUpperCase();
+    let province_id;
+    switch (province_name) {
         case "CABO DELGADO":
-            region_id = "CABODELGADO";
+            province_id = "CABODELGADO";
             break;
         case "MAPUTO CITY":
-            region_id = "MAPUTOCIDADE";
+            province_id = "MAPUTOCIDADE";
             break;
         default:
-            region_id = region_name;
+            province_id = province_name;
     }
 
     //Resize the plot
-    resizePlot(region_id);
+    resizePlot(province_id);
 
     // Select the canvas element
-    let svg = d3.select("#" + region_id);
+    let svg = d3.select("#" + province_id);
 
     //Clear canvas
     svg.selectAll("*").remove();
@@ -702,14 +702,14 @@ function plotRegion(regionName) {
 
         data.forEach(function (d) {
             d.date = new Date(d.date);
-            d.val = taxa ? +d.rate : +d.incident_cases;
-            d.val_low = taxa ? +d.rate_low : +d.incident_cases_low; // Assuming these properties exist in your dataset
-            d.val_up = taxa ? +d.rate_up : +d.incident_cases_upp;
+            d.val = taxa ? +d.rate : +d.cases;
+            d.val_low = taxa ? +d.rate_low : +d.cases_low; // Assuming these properties exist in your dataset
+            d.val_up = taxa ? +d.rate_up : +d.cases_upp;
             d.epiweek = +d.epiweek;
         });
 
         // Filter data where type is "Observado"
-        let filteredData = data.filter(d => d.disease === disease_name && d.Region === region_name);
+        let filteredData = data.filter(d => d.disease === disease_name && d.province === province_name);
 
         // Define scales for x and y axes
         let xScale = d3.scaleTime()
@@ -810,11 +810,11 @@ function plotRegion(regionName) {
     });
 }
 
-function plotRegions() {
-    const regionNames = ["CABO DELGADO", "GAZA", "INHAMBANE", "MANICA", "MAPUTO",
+function plotprovinces() {
+    const provinceNames = ["CABO DELGADO", "GAZA", "INHAMBANE", "MANICA", "MAPUTO",
         "MAPUTO CITY", "NAMPULA", "NIASSA", "SOFALA", "TETE", "ZAMBEZIA"];
-    regionNames.forEach(function (element) {
-        plotRegion(element);
+    provinceNames.forEach(function (element) {
+        plotprovince(element);
     });
 }
 
@@ -861,7 +861,7 @@ $(document).ready(function () {
     });
 
     //Create the plots for trends
-    plotRegions();
+    plotprovinces();
 
     //Clicks on Malaria and Diarrhea
     $('a[href="#malaria"]').click(function () {
@@ -869,7 +869,7 @@ $(document).ready(function () {
         updateDataMapObservado();
         diseaseName();
         getTable();
-        plotRegions();
+        plotprovinces();
     });
 
     $('a[href="#diarrhea"]').click(function () {
@@ -877,12 +877,12 @@ $(document).ready(function () {
         updateDataMapObservado();
         diseaseName();
         getTable();
-        plotRegions();
+        plotprovinces();
     });
 
     //Add listener to resize and replot
     $(window).resize(function () {
-        plotRegions();
+        plotprovinces();
     });
 
     //Add listener to switch
@@ -890,7 +890,7 @@ $(document).ready(function () {
         updateLegendTitle();
         updateDataMapPrevisto();
         updateDataMapObservado();
-        plotRegions();
+        plotprovinces();
     });
 });
 
